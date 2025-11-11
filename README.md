@@ -266,7 +266,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ by Financial Technology Enthusiasts**
 
-[![GitHub](https://img.shields.io/badge/GitHub-enecpp-181717?style=flat-square&logo=github)](https://github.com/enecpp)
+[![GitHub](https://img.shields.io/badge/GitHub-enesor0-181717?style=flat-square&logo=github)](https://github.com/enecpp)
 
 </div>
 
@@ -282,7 +282,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Need help? We're here for you!
 
 - 📧 **Email**: enesor8@gmail.com
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/enecpp/FINANCIALNEWSANALYZER/issues)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/enesor0/FINANCIALNEWSANALYZER/issues)
 - ✉️ **Contact Form**: Use the built-in Contact Us page for inquiries
 - 💬 **Live Support**: Available through the application interface
 - 🔐 **Security**: All communications are secure and confidential
