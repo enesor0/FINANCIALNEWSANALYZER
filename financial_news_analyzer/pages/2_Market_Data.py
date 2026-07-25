@@ -10,6 +10,7 @@ import plotly.graph_objects as go  # type: ignore
 from datetime import datetime, timedelta
 import numpy as np
 import sys
+import importlib
 from pathlib import Path
 
 repository_root = Path(__file__).resolve().parents[2]
@@ -20,10 +21,11 @@ from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service i
     LiveDataUnavailable,
     YahooFinanceService,
 )
-from financial_news_analyzer.src.presentation.design_system import (
-    apply_design_system,
-    render_page_header,
-)
+from financial_news_analyzer.src.presentation import design_system
+
+design_system = importlib.reload(design_system)
+apply_design_system = design_system.apply_design_system
+render_page_header = design_system.render_page_header
 
 # Page configuration
 st.set_page_config(
@@ -972,8 +974,14 @@ def main():
     # Add refresh button
     if st.button("🔄 Refresh Data"):
         st.rerun()
-    
-    # External broker links
+
+    st.caption(
+        "Live market values are supplied by Yahoo Finance and may be delayed. "
+        "This workspace does not include broker promotions, simulated prices, or investment recommendations."
+    )
+    return
+
+    # Legacy static broker content retained below for source history only.
     st.markdown("---")
     st.markdown("## 🏦 External Broker & Platform Links")
     st.caption("These links are informational only, not endorsements or investment recommendations. Verify eligibility, fees, and regulation independently.")

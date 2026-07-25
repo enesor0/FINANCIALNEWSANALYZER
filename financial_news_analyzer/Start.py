@@ -15,6 +15,7 @@ import sys
 import os
 from datetime import datetime
 import logging
+import importlib
 from pathlib import Path
 from typing import Optional, Dict, Any
 
@@ -26,10 +27,11 @@ repository_root = current_dir.parent
 if str(repository_root) not in sys.path:
     sys.path.insert(0, str(repository_root))
 
-from financial_news_analyzer.src.presentation.design_system import (
-    apply_design_system,
-    render_page_header,
-)
+from financial_news_analyzer.src.presentation import design_system
+
+design_system = importlib.reload(design_system)
+apply_design_system = design_system.apply_design_system
+render_page_header = design_system.render_page_header
 
 # Configure logging
 logging.basicConfig(
@@ -542,12 +544,11 @@ class FinancialAnalyzerApp:
 
         # Core features section
         self._render_features()
-        
-        # Quick Stats Dashboard
-        self._render_quick_stats()
-        
-        # Technical information
-        self._render_technical_info()
+
+        st.caption(
+            "Market prices and article metadata are retrieved from the provider when you open a workspace. "
+            "No simulated feed or configuration dashboard is shown here."
+        )
 
     def _render_workspace_actions(self):
         """Surface the two primary workflows before secondary information."""

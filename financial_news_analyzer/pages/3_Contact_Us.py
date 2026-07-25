@@ -1,16 +1,18 @@
 import streamlit as st  # type: ignore
 from datetime import datetime
 import sys
+import importlib
 from pathlib import Path
 
 repository_root = Path(__file__).resolve().parents[2]
 if str(repository_root) not in sys.path:
     sys.path.insert(0, str(repository_root))
 
-from financial_news_analyzer.src.presentation.design_system import (
-    apply_design_system,
-    render_page_header,
-)
+from financial_news_analyzer.src.presentation import design_system
+
+design_system = importlib.reload(design_system)
+apply_design_system = design_system.apply_design_system
+render_page_header = design_system.render_page_header
 
 # Page configuration
 st.set_page_config(
@@ -217,9 +219,47 @@ def main():
         eyebrow="Support center",
         badges=["Email support", "Product feedback", "Research questions"],
     )
-    
-    # Contact methods section
-    st.subheader("📞 Contact Methods")
+
+    st.subheader("Contact support")
+    contact_col, guidance_col = st.columns([1.1, 1])
+    with contact_col:
+        st.markdown(
+            """
+            <section class="support-panel">
+                <h3>Email us</h3>
+                <p>For product questions, feedback, or a reproducible issue report, send one clear message to:</p>
+                <p><a class="article-link" href="mailto:enesor8@gmail.com">enesor8@gmail.com ↗</a></p>
+                <p>We aim to reply within one business day. Please do not send account, card, or other sensitive information.</p>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
+    with guidance_col:
+        st.markdown(
+            """
+            <section class="support-panel">
+                <h3>Write a useful request</h3>
+                <ul>
+                    <li>Describe what you expected and what happened instead.</li>
+                    <li>Include the company, filter, or page you were using.</li>
+                    <li>For a bug, attach a screenshot and the browser/device details.</li>
+                </ul>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### Quick answers")
+    with st.expander("Where does the data come from?"):
+        st.write("News and market information is requested from Yahoo Finance through yfinance when a workspace is opened. Provider data may be delayed or unavailable.")
+    with st.expander("Is this investment advice?"):
+        st.write("No. The application is a research tool. Review original sources and seek qualified advice before making financial decisions.")
+    with st.expander("How do I report a display problem?"):
+        st.write("Email a screenshot, the affected page, the filters you selected, and your browser/device details so the issue can be reproduced.")
+
+    return
+
+    # Legacy contact content retained below for source history only.
     
     col1, col2, col3 = st.columns(3)
     

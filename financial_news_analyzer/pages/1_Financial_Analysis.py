@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
 import sys
+import importlib
 from html import escape
 from pathlib import Path
 
@@ -22,10 +23,11 @@ from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service i
     LiveDataUnavailable,
     YahooFinanceService,
 )
-from financial_news_analyzer.src.presentation.design_system import (
-    apply_design_system,
-    render_page_header,
-)
+from financial_news_analyzer.src.presentation import design_system
+
+design_system = importlib.reload(design_system)
+apply_design_system = design_system.apply_design_system
+render_page_header = design_system.render_page_header
 
 # Page configuration
 st.set_page_config(
@@ -1412,58 +1414,34 @@ def main():
     st.plotly_chart(create_company_sentiment_chart(df_filtered), use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Recent news table
-    st.subheader("📰 Recent News Analysis")
+    # Recent news from the selected live provider.
+    st.subheader("Latest coverage")
     
     # Display filtered data with links
     if not df_filtered.empty:
         df_display = df_filtered.sort_values('Date', ascending=False).head(15)
         
-        # Show news articles with headlines and links
-        st.markdown("### 📋 Latest Financial News")
+        st.caption("Open an item to read it on the original publisher site.")
         
         for idx, row in df_display.iterrows():
-            # Color coding for sentiment
-            if row['Sentiment'] == 'Positive':
-                sentiment_color = "🟢"
-            elif row['Sentiment'] == 'Negative':
-                sentiment_color = "🔴"
-            else:
-                sentiment_color = "🟡"
-            
-            # Create news card
-            with st.container():
-                col1, col2 = st.columns([4, 1])
-                
-                with col1:
-                    st.markdown(f"""
-                    <div style="
-                        background: var(--secondary-bg, #f8f9fa);
-                        padding: 15px;
-                        border-radius: 10px;
-                        margin: 10px 0;
-                        border-left: 4px solid {'#28a745' if row['Sentiment'] == 'Positive' else '#dc3545' if row['Sentiment'] == 'Negative' else '#ffc107'};
-                    ">
-                        <h4 style="margin: 0 0 8px 0; color: #333;">
-                            📰 {escape(str(row['Headline']))}
-                        </h4>
-                        <p style="margin: 5px 0; color: #666;">
-                            <strong>{escape(str(row['Company']))}</strong> • {row['Date']} • {escape(str(row['Source']))} • {escape(str(row['News_Type']))}
-                        </p>
-                        <p style="margin: 8px 0 0 0;">
-                            {sentiment_color} <strong>{row['Sentiment']}</strong> 
-                            (Score: {row['Sentiment_Score']:.2f}) • 
-                            Signal strength: {row['Impact_Score']:.2f}
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with col2:
-                    # Link button
-                    if st.button(f"🔗 Read Full Article", key=f"link_{idx}", 
-                               help=f"Read full article from {row['Source']}"):
-                        st.markdown(f"**Source Link:** [{row['Source']}]({row['News_Link']})")
-                        st.info(f"Click the link above to read the full article from {row['Source']}")
+            sentiment = str(row['Sentiment']).lower()
+            sentiment_class = sentiment if sentiment in {"positive", "negative", "neutral"} else "neutral"
+            headline = escape(str(row['Headline']))
+            company = escape(str(row['Company']))
+            source = escape(str(row['Source']))
+            news_type = escape(str(row['News_Type']))
+            article_url = escape(str(row['News_Link']), quote=True)
+            article_date = escape(str(row['Date']))
+            st.markdown(
+                f'<article class="news-card {sentiment_class}">'
+                f'<h4>{headline}</h4>'
+                f'<div class="news-meta">{company} · {article_date} · {source} · {news_type}</div>'
+                f'<div class="news-footer"><span class="sentiment-chip {sentiment_class}">'
+                f'{escape(str(row["Sentiment"]))} sentiment · score {row["Sentiment_Score"]:.2f}'
+                f'</span><a class="article-link" href="{article_url}" target="_blank" '
+                f'rel="noopener noreferrer">Read original article ↗</a></div></article>',
+                unsafe_allow_html=True,
+            )
         
         # Traditional table view toggle
         with st.expander("📊 View as Data Table", expanded=False):
