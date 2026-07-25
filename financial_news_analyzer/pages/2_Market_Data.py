@@ -1,6 +1,6 @@
 """
 Market Data Analysis Page
-Real-time market data visualization and technical analysis
+Latest available market-data visualization and price history
 """
 
 import streamlit as st          # type: ignore
@@ -639,7 +639,7 @@ def main():
             📈 Market Data Analysis
         </h1>
         <h3 style="font-weight: 300; font-size: 1.5rem; color: #bdc3c7; margin: 1rem 0;">
-            Real-time Market Data Visualization and Technical Analysis
+            Latest Available Market Data and Price History
         </h3>
     </div>
     """, unsafe_allow_html=True)

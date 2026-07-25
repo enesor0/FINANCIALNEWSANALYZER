@@ -1,6 +1,6 @@
 """
 Financial News Analysis Page
-Advanced financial news sentiment analysis with AI-powered insights
+Provider-linked financial news with explainable sentiment scoring
 """
 
 import streamlit as st
@@ -782,7 +782,7 @@ def main():
             📊 Financial News Analysis
         </h1>
         <h3 style="font-weight: 300; font-size: 1.5rem; color: #bdc3c7; margin: 1rem 0;">
-            Advanced Financial News Sentiment Analysis with AI-powered Insights
+            Provider-Linked Financial News with Explainable Sentiment Scoring
         </h3>
     </div>
     """, unsafe_allow_html=True)

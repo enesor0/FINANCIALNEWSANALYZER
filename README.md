@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Financial News Analyzer](https://img.shields.io/badge/Financial-News%20Analyzer-2c3e50?style=for-the-badge&logo=chart-line)
-![Python](https://img.shields.io/badge/Python-3.8+-3776ab?style=for-the-badge&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10+-3776ab?style=for-the-badge&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
@@ -11,7 +11,7 @@
 
 🌐 **Live Demo:** [financialnewsanalyzer.streamlit.app](https://financialnewsanalyzer.streamlit.app/)
 
-*Advanced AI-powered financial news sentiment analysis with real-time market data visualization and professional contact interface*
+*Provider-linked financial news analysis and latest-available daily market-data visualization*
 
 [🚀 Demo](#demo) • [📖 Documentation](#documentation) • [⚡ Quick Start](#quick-start) • [🔧 Features](#features)
 
@@ -21,53 +21,46 @@
 
 ## 🌟 Overview
 
-Financial News Analyzer is a cutting-edge financial intelligence platform that combines **AI-powered sentiment analysis**, **real-time market data**, and **interactive visualizations** to provide comprehensive market insights. Built with modern architecture principles and designed for financial professionals, traders, and analysts.
+Financial News Analyzer is a research-oriented Streamlit application combining linked financial-news retrieval, explainable keyword-based sentiment scoring, and interactive market-data visualizations.
 
 ## ⚠️ Current data status
 
 - The **Market Data** page retrieves the latest available daily OHLCV data from Yahoo Finance through `yfinance`, cached for five minutes.
 - The **Financial Analysis** page retrieves linked provider news from the same integration and applies a transparent keyword-based sentiment baseline.
-- Dashboard summary cards and the demo market feed are explicitly marked as previews; they are not market data.
+- Dashboard summary cards describe configuration; they do not present market values.
 - This project is for research and education, not investment advice. `yfinance` is unaffiliated with Yahoo and its data access is intended for personal use; obtain an appropriately licensed provider before commercial or production use.
 
 ### 🎯 Key Highlights
 
-- **🤖 AI-Powered Analysis**: Advanced NLP algorithms for news sentiment analysis
-- **📊 Real-time Data**: Live market data with interactive charts and technical indicators
-- **🌍 Global Coverage**: 24/7 monitoring across Americas, Europe, Asia-Pacific, and MENA
+- **🔎 Explainable Sentiment**: Keyword-based scoring with visible source links
+- **📊 Latest Daily Data**: Provider-backed OHLCV charts with five-minute caching
+- **🌍 Market Schedules**: Weekday schedule display across global timezones
 - **📱 Responsive Design**: Modern UI with professional animations and dark theme
 - **🏗️ Clean Architecture**: SOLID principles with layered design pattern
-- **⚡ High Performance**: Optimized data processing and caching mechanisms
-- **✉️ Professional Contact**: Sophisticated contact system with priority handling
+- **⚡ Cached Retrieval**: Short-lived provider response caching to reduce rate limiting
+- **✉️ Contact Page**: Direct email contact details and FAQs
 
 ## 🔧 Features
 
 ### 📰 Financial News Analysis
-- **Sentiment Analysis**: AI-powered sentiment scoring for market-moving news
-- **Company-specific Insights**: Targeted analysis for individual stocks and companies
-- **News Aggregation**: Real-time news feed from multiple financial sources
-- **Impact Assessment**: Market impact prediction based on news sentiment
-- **Historical Trends**: Sentiment timeline analysis and pattern recognition
+- **Sentiment Analysis**: Explainable keyword scoring of provider-returned headline and summary text
+- **Company-specific Insights**: Targeted news retrieval for selected companies
+- **News Aggregation**: Provider-linked news articles with their available URLs
+- **Historical Trends**: Sentiment timeline of the retrieved articles
 
 ### 📈 Market Data Visualization
 - **Interactive Charts**: Candlestick, line, and area charts with zoom functionality
-- **Technical Indicators**: Moving averages, RSI, MACD, and custom indicators
-- **Portfolio Analysis**: Comprehensive portfolio performance tracking
-- **Market Overview**: Real-time market status across global exchanges
+- **Technical Indicators**: Price and volume visualizations from daily OHLCV history
+- **Market Overview**: Latest available provider prices for the supported symbol universe
 - **Correlation Analysis**: Inter-market and cross-asset correlation matrices
 
 ### 🌍 Global Market Coverage
-- **Multi-timezone Support**: Live market status across different time zones
-- **Regional Analysis**: Dedicated coverage for major financial regions
-- **Currency Tracking**: Real-time forex rates and currency analysis
-- **Commodity Data**: Oil, gold, and other commodity price tracking
-- **Economic Indicators**: Key economic metrics and calendar events
+- **Multi-timezone Support**: Weekday schedules across different exchange time zones
+- **Regional Analysis**: Schedule coverage for major financial regions
 
 ### ✉️ Professional Contact System
 - **Modern Interface**: Sophisticated contact form with responsive design
-- **Priority Handling**: Urgency-based request categorization
-- **Multiple Channels**: Email, live chat, and social media integration
-- **Quick Response**: Automated response time estimates
+- **Primary Channel**: Direct email contact
 - **FAQ Support**: Comprehensive frequently asked questions section
 - **Professional Support**: Technical assistance and customer service
 
@@ -75,7 +68,7 @@ Financial News Analyzer is a cutting-edge financial intelligence platform that c
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip package manager
 - 4GB RAM minimum (8GB recommended)
 - Modern web browser (Chrome, Firefox, Safari, Edge)
@@ -125,14 +118,13 @@ yfinance>=0.2.54,<1.0
 **Security Features:**
 
 - 🔒 **Data Protection**: All user data is handled with industry-standard security practices
-- 🌐 **HTTPS**: Secure communication protocols for all web interactions
-- �️ **Input Validation**: Comprehensive form validation and sanitization
-- � **No External Dependencies**: No third-party data storage requirements
-- 🔐 **Privacy First**: User privacy is prioritized in all system designs
+- 🌐 **Deployment Security**: HTTPS must be configured by the deployment platform
+- 🧹 **Rendered Provider Text**: External article title/source fields are escaped before HTML rendering
+- 🔗 **External Provider**: Yahoo Finance data is retrieved via `yfinance`; see its terms before use
 
 **Best Practices:**
 
-- ⚡ **Performance**: Optimized caching and data processing
+- ⚡ **Performance**: Five-minute provider caching for the live data pages
 - 📱 **Responsive**: Mobile-first design approach
 - ♿ **Accessibility**: WCAG compliance for inclusive user experience
 - 🎨 **Modern UI**: Contemporary design patterns and animations
@@ -165,36 +157,9 @@ financial_news_analyzer/
 - **Use Case Pattern**: Business logic encapsulated in specific use cases
 - **Repository Pattern**: Data access abstraction for external services
 
-## 🎮 Usage Examples
+## 🎮 Usage
 
-### 📊 Analyzing Company Sentiment
-
-```python
-# Select a company from the extensive database
-selected_company = "Apple Inc. (AAPL)"
-
-# View real-time sentiment analysis
-sentiment_score = analyzer.get_sentiment(selected_company)
-market_impact = analyzer.assess_impact(sentiment_score)
-
-# Generate insights and recommendations
-insights = analyzer.generate_insights(selected_company)
-```
-
-### 📈 Market Data Analysis
-
-```python
-# Track market performance
-market_data = analyzer.get_market_overview()
-technical_indicators = analyzer.calculate_indicators(symbol="AAPL")
-
-# Generate interactive visualizations
-chart = analyzer.create_interactive_chart(
-    symbol="AAPL",
-    indicators=["SMA", "EMA", "RSI"],
-    timeframe="1M"
-)
-```
+Run the Streamlit app, open **Financial Analysis** to select companies and retrieve linked articles, or open **Market Data** to view the supported live symbol universe and its daily OHLCV history. The app does not currently expose a public Python `analyzer` API, portfolio management, trading signals, or investment recommendations.
 
 ## 🌟 Screenshots
 
@@ -205,7 +170,7 @@ chart = analyzer.create_interactive_chart(
 ![Financial Analysis](https://via.placeholder.com/800x400/34495e/ffffff?text=AI-Powered+Sentiment+Analysis)
 
 ### Market Data Visualization
-![Market Data](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=Real-time+Market+Data)
+![Market Data](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=Latest+Available+Market+Data)
 
 ### Contact Us Page
 ![Contact Us](https://via.placeholder.com/800x400/FF6B6B/ffffff?text=Professional+Contact+Interface)

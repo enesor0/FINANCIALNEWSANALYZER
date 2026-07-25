@@ -35,6 +35,7 @@ class WorldClockComponent:
             container = st.sidebar
         
         container.markdown("### 🌍 Global Financial Markets")
+        container.caption("Weekday schedule only; exchange holidays and early closes are not included.")
         container.markdown("---")
         
         # Group markets by region

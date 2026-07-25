@@ -3,7 +3,7 @@ Market Entity
 Represents financial markets with status and schedule information
 """
 from dataclasses import dataclass
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Optional, Dict, Any
 from enum import Enum
 import pytz
@@ -72,20 +72,23 @@ class Market:
         if self.current_status is None:
             self.current_status = self.get_current_status()
     
-    def get_current_status(self) -> MarketStatus:
-        """Calculate current market status based on time"""
+    def get_current_status(self, now: Optional[datetime] = None) -> MarketStatus:
+        """Calculate status for a weekday schedule in the market's timezone.
+
+        Exchange holiday and early-close calendars are not embedded in this
+        entity. Those require a dedicated market-calendar data source.
+        """
         try:
             tz = pytz.timezone(self.timezone)
-            current_time = datetime.now(tz).time()
-            
-            # Check if market is currently open
+            local_now = now.astimezone(tz) if now is not None else datetime.now(tz)
+            if local_now.weekday() >= 5:
+                return MarketStatus.CLOSED
+
+            current_time = local_now.time()
             if self._is_time_between(current_time, self.open_time, self.close_time):
                 return MarketStatus.OPEN
-            else:
-                return MarketStatus.CLOSED
-                
+            return MarketStatus.CLOSED
         except Exception:
-            # Fallback if timezone calculation fails
             return MarketStatus.CLOSED
     
     def _is_time_between(self, current: time, start: time, end: time) -> bool:
@@ -152,6 +155,18 @@ class Market:
     def get_trading_hours(self) -> str:
         """Get formatted trading hours"""
         return f"{self.open_time.strftime('%H:%M')} - {self.close_time.strftime('%H:%M')}"
+
+    def _next_open_after(self, now: datetime) -> datetime:
+        """Return the next weekday opening instant in ``now``'s timezone."""
+        candidate = now.replace(
+            hour=self.open_time.hour,
+            minute=self.open_time.minute,
+            second=0,
+            microsecond=0,
+        )
+        while candidate <= now or candidate.weekday() >= 5:
+            candidate += timedelta(days=1)
+        return candidate
     
     def time_until_open(self) -> Optional[str]:
         """Get time until market opens (if closed)"""
@@ -162,18 +177,7 @@ class Market:
             tz = pytz.timezone(self.timezone)
             now = datetime.now(tz)
             
-            # Calculate next opening time
-            next_open = now.replace(
-                hour=self.open_time.hour,
-                minute=self.open_time.minute,
-                second=0,
-                microsecond=0
-            )
-            
-            # If opening time has passed today, move to next day
-            if next_open <= now:
-                next_open = next_open.replace(day=next_open.day + 1)
-            
+            next_open = self._next_open_after(now)
             time_diff = next_open - now
             hours = int(time_diff.total_seconds() // 3600)
             minutes = int((time_diff.total_seconds() % 3600) // 60)

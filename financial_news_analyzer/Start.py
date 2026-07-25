@@ -5,7 +5,7 @@ Modern financial analysis platform for market intelligence
 This application provides:
 - Clean Architecture with layered design
 - Professional financial analysis tools
-- Real-time market data visualization
+- Latest available market-data visualization
 - Comprehensive news sentiment analysis
 - Global market coverage
 - Use Case Pattern
@@ -38,7 +38,7 @@ class FinancialAnalyzerApp:
     
     Features:
     - Comprehensive market data analysis
-    - Real-time news sentiment tracking
+    - Provider-linked news sentiment tracking
     - Interactive data visualization
     - Multi-platform broker integration
     """
@@ -575,7 +575,7 @@ class FinancialAnalyzerApp:
                 <h3 style="color: white; margin: 0; font-size: 18px;">Market Data Analysis</h3>
             </div>
             <p style="color: #bdc3c7; margin: 0; font-size: 14px;">
-                View real-time charts, technical analysis and market data
+                View provider-backed daily charts and market data
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -596,9 +596,6 @@ class FinancialAnalyzerApp:
         # Quick Stats Dashboard
         self._render_quick_stats()
         
-        # Live Market Feed
-        self._render_live_feed()
-        
         # Technical information
         self._render_technical_info()
     
@@ -612,12 +609,11 @@ class FinancialAnalyzerApp:
             st.markdown("""
             <div class="feature-card">
                 <h4>📰 Financial News Analysis</h4>
-                <p>Real-time financial news aggregation with AI-powered sentiment analysis 
-                and market impact assessment. Advanced NLP techniques provide deep insights 
-                into market-moving news.</p>
+                <p>Linked financial-news retrieval with a transparent keyword sentiment baseline.
+                Every displayed item links to its provider source for verification.</p>
                 <div style="margin-top: 15px;">
-                    <span class="status-indicator status-healthy">Live Data</span>
-                    <span class="status-indicator status-healthy">AI Analysis</span>
+                    <span class="status-indicator status-healthy">Provider Links</span>
+                    <span class="status-indicator status-healthy">Baseline Sentiment</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -626,11 +622,10 @@ class FinancialAnalyzerApp:
             st.markdown("""
             <div class="feature-card">
                 <h4>📊 Market Data Visualization</h4>
-                <p>Interactive charts, real-time market data, and comprehensive portfolio 
-                analysis tools. Technical indicators and advanced analytics for informed 
-                decision making.</p>
+                <p>Interactive charts using the latest available daily OHLCV data. Values are
+                cached briefly and clearly identify the external data provider.</p>
                 <div style="margin-top: 15px;">
-                    <span class="status-indicator status-healthy">Real-time</span>
+                    <span class="status-indicator status-healthy">Latest Daily Close</span>
                     <span class="status-indicator status-healthy">Interactive</span>
                 </div>
             </div>
@@ -640,11 +635,10 @@ class FinancialAnalyzerApp:
             st.markdown("""
             <div class="feature-card">
                 <h4>🌍 Global Market Coverage</h4>
-                <p>24/7 monitoring of global financial markets across Americas, Europe, 
-                Asia-Pacific, and MENA regions. Multi-timezone support with live market 
-                status updates.</p>
+                <p>Weekday market schedules across the Americas, Europe, Asia-Pacific, and
+                MENA regions, displayed in each exchange's local timezone.</p>
                 <div style="margin-top: 15px;">
-                    <span class="status-indicator status-healthy">24/7 Coverage</span>
+                    <span class="status-indicator status-healthy">Weekday Schedules</span>
                     <span class="status-indicator status-healthy">Multi-timezone</span>
                 </div>
             </div>
@@ -654,54 +648,17 @@ class FinancialAnalyzerApp:
         """Render quick stats dashboard"""
         st.markdown("---")
         st.markdown("### 📈 Market Overview")
-        st.caption("Dashboard summary cards are UI previews. Use the Market Data and Financial Analysis pages for provider-backed data.")
-        
-        # Generate sample stats
-        import random
-        
+        st.caption("These cards describe the current application configuration; market values are available on the data pages.")
+
         col1, col2, col3, col4 = st.columns(4)
-        
         with col1:
-            value = random.randint(1200, 1500)
-            change = random.uniform(-2.5, 2.5)
-            change_color = "#00D4AA" if change >= 0 else "#FF6B6B"
-            st.markdown(f"""
-            <div class="metric-card" style="border-left-color: {change_color};">
-                <h3>📰 Active News</h3>
-                <h2>{value}</h2>
-                <p style="color: {change_color};">{'▲' if change >= 0 else '▼'} {abs(change):.1f}% vs yesterday</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
+            st.metric("News source", "Linked provider", "Yahoo Finance")
         with col2:
-            value = random.randint(85, 95)
-            st.markdown(f"""
-            <div class="metric-card" style="border-left-color: #00D4AA;">
-                <h3>🎯 Sentiment Score</h3>
-                <h2>{value}%</h2>
-                <p style="color: #00D4AA;">Positive market sentiment</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
+            st.metric("Sentiment", "Keyword baseline", "Explainable")
         with col3:
-            value = random.randint(45, 55)
-            st.markdown(f"""
-            <div class="metric-card" style="border-left-color: #4ECDC4;">
-                <h3>🌍 Global Markets</h3>
-                <h2>{value}</h2>
-                <p style="color: #4ECDC4;">Markets actively tracked</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
+            st.metric("Market schedule", "Weekdays", "14 exchanges")
         with col4:
-            value = random.uniform(95.5, 99.9)
-            st.markdown(f"""
-            <div class="metric-card" style="border-left-color: #00D4AA;">
-                <h3>⚡ System Status</h3>
-                <h2>{value:.1f}%</h2>
-                <p style="color: #00D4AA;">Uptime & Performance</p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.metric("Refresh window", "5 minutes", "Provider cache")
     
     def _render_live_feed(self):
         """Render live market feed"""
@@ -836,7 +793,7 @@ class FinancialAnalyzerApp:
         <div style="text-align: center; color: #666; margin-top: 30px;">
             <p>📊 Financial News Analyzer • Built with ❤️ for Financial Professionals</p>
             <p style="font-size: 0.9em;">
-                Real-time data • Advanced analytics • Professional insights • Modern Architecture
+                Provider-linked data • Explainable analysis • Research tooling • Modern Architecture
             </p>
             <p style="font-size: 0.8em; margin-top: 10px;">
                 Powered by Clean Code principles and SOLID design patterns

@@ -237,9 +237,9 @@ def main():
         st.markdown("""
         <div class="contact-method">
             <h3>💬 Support</h3>
-            <p style="color: #00D4AA; font-weight: 600;">Live Chat</p>
+            <p style="color: #00D4AA; font-weight: 600;">Email Support</p>
             <p style="margin-top: 10px, 0.9rem; color: #bdc3c7;">
-                Available 9 AM - 6 PM
+                Contact by email
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -347,7 +347,7 @@ def main():
             <p><strong>Saturday:</strong> 10:00 AM - 4:00 PM</p>
             <p><strong>Sunday:</strong> Closed</p>
             <p style="font-size: 0.9rem; margin-top: 15px;">
-                <em>Emergency support available 24/7 for critical issues</em>
+                <em>Response times are not guaranteed.</em>
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -374,8 +374,8 @@ def main():
     with faq_col1:
         with st.expander("🔒 Is my data secure?", expanded=False):
             st.write("""
-            Yes, we take data security seriously. All communications are encrypted, 
-            and we follow industry best practices for data protection.
+            This demo does not collect account data. Verify the security and privacy
+            practices of the platform hosting the application before sharing personal information.
             """)
         
         with st.expander("📊 How do I access premium features?", expanded=False):
@@ -386,8 +386,8 @@ def main():
         
         with st.expander("🛠️ Technical support hours?", expanded=False):
             st.write("""
-            Technical support is available Monday-Friday 9 AM - 6 PM. 
-            Critical issues receive 24/7 support.
+            Contact availability is not guaranteed; use the published email address
+            for questions or bug reports.
             """)
     
     with faq_col2:
@@ -405,8 +405,8 @@ def main():
         
         with st.expander("🔄 How often is data updated?", expanded=False):
             st.write("""
-            Market data is updated in real-time during trading hours. 
-            News analysis is updated continuously throughout the day.
+            Market and news data are refreshed on demand and may be delayed by the
+            external provider.
             """)
     
     # Footer with additional links
