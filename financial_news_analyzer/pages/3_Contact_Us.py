@@ -17,7 +17,7 @@ render_page_header = design_system.render_page_header
 
 # Page configuration
 st.set_page_config(
-    page_title="✉️ Contact Us",
+    page_title="Support · Financial News Analyzer",
     page_icon="✉️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -29,13 +29,20 @@ def main():
     render_app_shell("support")
 
     render_page_header(
-        "How can we help?",
-        "Reach the team for product support, feedback, or questions about the research workflow.",
+        "Get help without the back-and-forth.",
+        "Send product feedback, report an issue, or ask a question about the research workflow.",
         eyebrow="Support center",
-        badges=["Email support", "Product feedback", "Research questions"],
+        badges=["One-business-day target", "No data stored", "Email handoff"],
     )
 
-    st.subheader("Contact support")
+    st.markdown(
+        """
+        <div class="section-kicker">Contact</div>
+        <div class="section-heading">Choose the clearest route</div>
+        <p class="section-copy">A little context helps us give you a useful answer on the first reply.</p>
+        """,
+        unsafe_allow_html=True,
+    )
     contact_col, guidance_col = st.columns([1.1, 1])
     with contact_col:
         st.markdown(
@@ -64,7 +71,13 @@ def main():
             unsafe_allow_html=True,
         )
 
-    st.markdown("### Send a request")
+    st.markdown(
+        """
+        <div class="section-kicker">Message builder</div>
+        <div class="section-heading">Prepare a support request</div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.caption("Your message stays in your browser until you choose to open the prepared email draft.")
     with st.form("support_request", clear_on_submit=False):
         form_col1, form_col2 = st.columns(2)
@@ -99,7 +112,13 @@ def main():
         st.success("Your request is ready. Open it in your email app to review and send it.")
         st.link_button("Open prepared email", support_mailto, use_container_width=True)
 
-    st.markdown("### Quick answers")
+    st.markdown(
+        """
+        <div class="section-kicker">Before you write</div>
+        <div class="section-heading">Quick answers</div>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.expander("Where does the data come from?"):
         st.write("News and market information is requested from Yahoo Finance through yfinance when a workspace is opened. Provider data may be delayed or unavailable.")
     with st.expander("Is this investment advice?"):
@@ -109,5 +128,5 @@ def main():
 
 try:
     main()
-except Exception as e:
-    st.error(f"Bir hata oluştu: {e}")
+except Exception:
+    st.error("The support page could not be loaded. Please refresh and try again.")

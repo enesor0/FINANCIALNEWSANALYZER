@@ -21,8 +21,8 @@ class WorldClockComponent:
         MarketRegion.MENA_AFRICA: "🌍 MENA & Africa",
     }
     _status_presentation = {
-        MarketStatus.OPEN: ("🟢", "#28a745"),
-        MarketStatus.CLOSED: ("🔴", "#dc3545"),
+        MarketStatus.OPEN: ("●", "#047857"),
+        MarketStatus.CLOSED: ("●", "#BE123C"),
     }
 
     def __init__(self, get_market_schedules: GetMarketSchedulesUseCase) -> None:
@@ -77,14 +77,14 @@ class WorldClockComponent:
         emoji, color = self._status_presentation[status]
         countdown = self._countdown_text(market, status, local_now)
         card_html = (
-            f'<div style="padding:8px;margin:4px 0;border-left:3px solid {color};'
-            f'background-color:rgba(255,255,255,0.05);border-radius:5px;">'
+            f'<div style="padding:10px;margin:6px 0;border:1px solid #E2E8F0;border-left:3px solid {color};'
+            f'background-color:#FFFFFF;border-radius:10px;">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;">'
             f'<div><strong style="font-size:0.9em;">{market.country_flag} {market.name}</strong><br>'
             f'<span style="font-size:1.1em;font-weight:bold;">{local_now:%H:%M}</span>'
-            f'<span style="font-size:0.8em;color:#888;"> ({local_now:%m/%d})</span></div>'
+            f'<span style="font-size:0.8em;color:#64748B;"> ({local_now:%m/%d})</span></div>'
             f'<div style="text-align:right;"><span style="color:{color};font-weight:bold;font-size:0.8em;">'
-            f'{emoji} {status.value.upper()}</span><br><span style="font-size:0.7em;color:#999;">'
+            f'{emoji} {status.value.upper()}</span><br><span style="font-size:0.7em;color:#64748B;">'
             f'{market.open_time:%H:%M} - {market.close_time:%H:%M}</span></div></div>{countdown}</div>'
         )
         container.markdown(card_html, unsafe_allow_html=True)
@@ -100,7 +100,7 @@ class WorldClockComponent:
             return ""
         label = "Opens" if status is MarketStatus.CLOSED else "Closes"
         return (
-            '<div style="margin-top:4px;font-size:0.7em;color:#999;">'
+            '<div style="margin-top:4px;font-size:0.7em;color:#64748B;">'
             f'{label} in: {WorldClockComponent._format_duration(duration)}</div>'
         )
 

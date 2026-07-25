@@ -28,10 +28,10 @@ render_page_header = design_system.render_page_header
 
 # Page configuration
 st.set_page_config(
-    page_title="📊 Financial Analysis",
-    page_icon="📊",
+    page_title="News Research · Financial News Analyzer",
+    page_icon="📰",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 def get_company_database():
@@ -125,12 +125,17 @@ def load_live_news(companies):
 def create_sentiment_chart(df):
     """Create sentiment analysis chart"""
     sentiment_counts = df['Sentiment'].value_counts()
+    sentiment_colors = {
+        'Positive': '#10B981',
+        'Negative': '#F43F5E',
+        'Neutral': '#94A3B8',
+    }
     
     fig = go.Figure(data=[
         go.Bar(
             x=sentiment_counts.index,
             y=sentiment_counts.values,
-            marker_color=['#7B9669', '#404E3B', '#6C8480'],
+            marker_color=[sentiment_colors[label] for label in sentiment_counts.index],
             text=sentiment_counts.values,
             textposition='auto',
         )
@@ -140,14 +145,14 @@ def create_sentiment_chart(df):
         title="News Sentiment Distribution",
         xaxis_title="Sentiment",
         yaxis_title="Number of Articles",
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        font=dict(color='#475569'),
         showlegend=False
     )
     
-    return fig
+    return design_system.style_plotly_chart(fig)
 
 def create_timeline_chart(df):
     """Create sentiment timeline chart"""
@@ -160,20 +165,20 @@ def create_timeline_chart(df):
         color='Sentiment',
         title="Sentiment Timeline",
         color_discrete_map={
-            'Positive': '#7B9669',
-            'Negative': '#404E3B',
-            'Neutral': '#6C8480'
+            'Positive': '#10B981',
+            'Negative': '#F43F5E',
+            'Neutral': '#94A3B8'
         }
     )
     
     fig.update_layout(
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white')
+        font=dict(color='#475569')
     )
     
-    return fig
+    return design_system.style_plotly_chart(fig)
 
 def create_company_sentiment_chart(df):
     """Create company-wise sentiment analysis"""
@@ -183,7 +188,7 @@ def create_company_sentiment_chart(df):
     
     for sentiment in ['Positive', 'Negative', 'Neutral']:
         if sentiment in company_sentiment.columns:
-            color = {'Positive': '#7B9669', 'Negative': '#404E3B', 'Neutral': '#6C8480'}[sentiment]
+            color = {'Positive': '#10B981', 'Negative': '#F43F5E', 'Neutral': '#94A3B8'}[sentiment]
             fig.add_trace(go.Bar(
                 name=sentiment,
                 x=company_sentiment.index,
@@ -195,14 +200,14 @@ def create_company_sentiment_chart(df):
         title="Company-wise Sentiment Analysis",
         xaxis_title="Company",
         yaxis_title="Number of Articles",
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        font=dict(color='#475569'),
         barmode='stack'
     )
     
-    return fig
+    return design_system.style_plotly_chart(fig)
 
 def main():
     """Main function for Financial Analysis page"""
@@ -215,10 +220,10 @@ def main():
         st.rerun()
     
     render_page_header(
-        "Financial news, made actionable",
-        "Follow selected companies, compare the current news tone, and open each original source before deciding what matters.",
-        eyebrow="Research desk",
-        badges=["Source links included", "Keyword sentiment", "Company-first workflow"],
+        "Turn headlines into a clearer market view.",
+        "Build a focused company watchlist, compare the tone of recent coverage, and verify every signal at the original source.",
+        eyebrow="News research",
+        badges=["Original sources linked", "Explainable scoring", "Five-minute cache"],
     )
 
     st.caption(
@@ -226,44 +231,7 @@ def main():
         "not investment advice."
     )
     
-    # Quick tips for new users
-    if not st.session_state.get('tips_dismissed', False):
-        tip_col1, tip_col2 = st.columns([4, 1])
-        
-        with tip_col1:
-            st.info("💡 **New here?** Start with 🔥 Popular button in sidebar, then select 🎯 Top Companies for instant analysis!")
-        
-        with tip_col2:
-            if st.button("✖️ Dismiss", key="dismiss_tips"):
-                st.session_state.tips_dismissed = True
-                st.rerun()
-    
-    # Help section
-    with st.expander("ℹ️ How to Use This Page", expanded=False):
-        st.markdown("""
-        ### 🚀 Quick Start Guide
-        
-        **1. Choose Industry Categories:**
-        - Use the quick selection buttons (Popular, All Markets, Healthcare, Energy)
-        - Or manually select from the dropdown list
-        
-        **2. Select Companies:**
-        - **🎯 Top Companies:** Automatically selects top performers
-        - **⭐ Popular Picks:** Pre-selected famous companies  
-        - **🔍 Custom Selection:** Search and pick specific companies
-        
-        **3. Advanced Filtering:**
-        - Filter by news types (Earnings, Mergers, etc.)
-        - Choose sentiment (Positive, Negative, Neutral)
-        - Set impact score levels
-        
-        **4. Analysis Results:**
-        - View key metrics and trends
-        - Interactive charts and visualizations
-        - Detailed news sentiment analysis
-        
-        💡 **Tip:** Start with "Popular Picks" for a quick overview!
-        """)
+    st.info("Start with a watchlist preset in the sidebar, or search for a company. Advanced article filters stay tucked away until you need them.")
     
     # Get company database
     company_db = get_company_database()
@@ -274,98 +242,23 @@ def main():
         ]
     
     # Sidebar filters
-    st.sidebar.header("🔍 Analysis Filters")
-    
-    # Quick preset buttons with improved layout and functionality
-    st.sidebar.markdown("### 🚀 Quick Selection")
-    
-    # Create 2x2 button layout
-    col1, col2 = st.sidebar.columns(2)
-    
-    with col1:
-        if st.button("🔥 Popular", key="popular", use_container_width=True, 
-                    help="Technology & Finance sectors"):
-            # Clear any existing selections first
-            for key in list(st.session_state.keys()):
-                if key.startswith(('multi_', 'browse_')):
-                    del st.session_state[key]
-            st.session_state.selected_categories = ['Technology', 'Finance']
-            st.session_state.active_companies = [
-                'Apple', 'Microsoft', 'Google', 'Amazon', 'Meta', 'JPMorgan Chase'
-            ]
-            st.session_state.preset_applied = True
-            st.sidebar.success("✅ Popular sectors selected!")
-            st.rerun()
-    
-    with col2:
-        if st.button("📈 All Markets", key="all_markets", use_container_width=True,
-                    help="All industry sectors"):
-            # Clear any existing selections first
-            for key in list(st.session_state.keys()):
-                if key.startswith(('multi_', 'browse_')):
-                    del st.session_state[key]
-            st.session_state.selected_categories = list(company_db.keys())
-            st.session_state.active_companies = [
-                'Apple', 'JPMorgan Chase', 'Johnson & Johnson', 'ExxonMobil',
-                'Walmart', 'Tesla', 'American Tower', 'Boeing'
-            ]
-            st.session_state.preset_applied = True
-            st.sidebar.success("✅ All markets selected!")
-            st.rerun()
-    
-    col3, col4 = st.sidebar.columns(2)
-    
-    with col3:
-        if st.button("💊 Healthcare", key="healthcare", use_container_width=True,
-                    help="Healthcare & Pharmaceutical companies"):
-            # Clear any existing selections first
-            for key in list(st.session_state.keys()):
-                if key.startswith(('multi_', 'browse_')):
-                    del st.session_state[key]
-            st.session_state.selected_categories = ['Healthcare']
-            st.session_state.active_companies = ['Johnson & Johnson', 'Pfizer', 'Merck', 'Abbott Laboratories']
-            st.session_state.preset_applied = True
-            st.sidebar.success("✅ Healthcare selected!")
-            st.rerun()
-    
-    with col4:
-        if st.button("⚡ Energy", key="energy", use_container_width=True,
-                    help="Energy & Oil companies"):
-            # Clear any existing selections first
-            for key in list(st.session_state.keys()):
-                if key.startswith(('multi_', 'browse_')):
-                    del st.session_state[key]
-            st.session_state.selected_categories = ['Energy']
-            st.session_state.active_companies = ['ExxonMobil', 'Chevron', 'ConocoPhillips', 'NextEra Energy']
-            st.session_state.preset_applied = True
-            st.sidebar.success("✅ Energy selected!")
-            st.rerun()
+    st.sidebar.header("Research controls")
+    st.sidebar.caption("Choose a watchlist, then refine the articles only if needed.")
+    st.sidebar.markdown("### Industries")
     
     # Initialize session state
     if 'selected_categories' not in st.session_state:
         st.session_state.selected_categories = ['Technology', 'Finance', 'Healthcare']
     
-    # Use session state for categories if preset was applied
-    default_categories = st.session_state.selected_categories if 'preset_applied' in st.session_state else ['Technology', 'Finance', 'Healthcare']
-    
     selected_categories = st.sidebar.multiselect(
-        "🏢 Industries",
+        "Filter company browser",
         options=list(company_db.keys()),
-        default=default_categories,
+        default=st.session_state.selected_categories,
         help="Choose industry sectors for analysis"
     )
     
     # Update session state
     st.session_state.selected_categories = selected_categories
-    
-    # Clear preset flag
-    if 'preset_applied' in st.session_state:
-        del st.session_state.preset_applied
-    
-    # Get companies from selected categories
-    available_companies = []
-    for category in selected_categories:
-        available_companies.extend(company_db[category])
     
     # Date range filter
     date_range = st.sidebar.date_input(
@@ -376,11 +269,11 @@ def main():
     )
     
     # Smart company selection
-    st.sidebar.markdown("### 🏭 Company Selection")
+    st.sidebar.markdown("### Companies")
     
     # Global search box for all companies
     search_term = st.sidebar.text_input(
-        "🔍 Quick Search",
+        "Search all companies",
         placeholder="Type any company name (IBM, Apple, Tesla...)",
         help="Search across all companies and categories"
     )
@@ -412,16 +305,14 @@ def main():
         search_selected = []
     
     # Category-based selection
-    st.sidebar.markdown("### 📂 Browse by Category")
+    st.sidebar.markdown("### Watchlist presets")
     
     # Quick selection buttons with proper session state handling
-    st.sidebar.markdown("**🚀 Quick Picks:**")
-    
     # Create 2x2 grid for better layout
     col1, col2 = st.sidebar.columns(2)
     
     with col1:
-        if st.button("🔥 Tech Giants", key="tech_giants", use_container_width=True, 
+        if st.button("Tech leaders", key="tech_giants", use_container_width=True,
                     help="Apple, Microsoft, Google, Amazon, Meta, Tesla"):
             # Clear existing selections
             for key in list(st.session_state.keys()):
@@ -432,7 +323,7 @@ def main():
             st.rerun()
     
     with col2:
-        if st.button("🏦 Finance", key="finance_top", use_container_width=True,
+        if st.button("Financials", key="finance_top", use_container_width=True,
                     help="JPMorgan Chase, Bank of America, Wells Fargo, Goldman Sachs"):
             # Clear existing selections
             for key in list(st.session_state.keys()):
@@ -445,7 +336,7 @@ def main():
     col3, col4 = st.sidebar.columns(2)
     
     with col3:
-        if st.button("💊 Healthcare", key="healthcare_pick", use_container_width=True,
+        if st.button("Healthcare", key="healthcare_pick", use_container_width=True,
                     help="Johnson & Johnson, Pfizer, Merck, Abbott"):
             # Clear existing selections
             for key in list(st.session_state.keys()):
@@ -456,7 +347,7 @@ def main():
             st.rerun()
     
     with col4:
-        if st.button("⚡ Energy", key="energy_pick", use_container_width=True,
+        if st.button("Energy", key="energy_pick", use_container_width=True,
                     help="ExxonMobil, Chevron, ConocoPhillips"):
             # Clear existing selections
             for key in list(st.session_state.keys()):
@@ -470,7 +361,7 @@ def main():
     
     # Category selection for detailed browsing (only if no search or quick selection)
     if not search_term:
-        st.sidebar.markdown("**🗂️ Browse by Industry:**")
+        st.sidebar.markdown("### Custom watchlist")
         
         browse_categories = st.sidebar.multiselect(
             "Select industries to explore",
@@ -584,56 +475,22 @@ def main():
 
     # Show provider coverage for the active selection.
     if selected_companies:
-        st.sidebar.markdown("### 📊 Data Summary")
         generated_companies = list(df['Company'].unique())
-        st.sidebar.markdown(f"**Articles returned for:** {len(generated_companies)} companies")
-        
-        # Show exact matching
-        st.sidebar.markdown("### ✅ Company Matching Check")
-        for selected in selected_companies:
-            if selected in generated_companies:
+        st.sidebar.markdown("### Coverage")
+        st.sidebar.caption(
+            f"{len(df)} articles returned across {len(generated_companies)} of "
+            f"{len(selected_companies)} selected companies."
+        )
+        with st.sidebar.expander("Coverage by company", expanded=False):
+            for selected in selected_companies[:8]:
                 count = len(df[df['Company'] == selected])
-                st.sidebar.markdown(f"✅ **{selected}**: {count} source articles")
-            else:
-                st.sidebar.markdown(f"❌ **{selected}**: NO DATA FOUND!")
-        
-        # Show if any unexpected companies appeared
-        unexpected = [comp for comp in generated_companies if comp not in selected_companies]
-        if unexpected:
-            st.sidebar.markdown("### ⚠️ Unexpected Companies:")
-            for comp in unexpected[:3]:
-                count = len(df[df['Company'] == comp])
-                st.sidebar.markdown(f"❓ **{comp}**: {count} news")
-        else:
-            st.sidebar.markdown("### ✅ Selected-company coverage")
-            st.sidebar.markdown("All displayed articles were returned for selected companies.")
-    
-    # Quick news headlines in sidebar
-    if selected_companies and not df.empty:
-        with st.sidebar.expander("📰 Latest Headlines", expanded=True):
-            latest_news = df.sort_values('Date', ascending=False).head(5)
-            for idx, row in latest_news.iterrows():
-                sentiment_emoji = "🟢" if row['Sentiment'] == 'Positive' else "🔴" if row['Sentiment'] == 'Negative' else "🟡"
-                st.markdown(f"""
-                <div style="
-                    background: #f8f9fa;
-                    padding: 8px;
-                    border-radius: 5px;
-                    margin: 5px 0;
-                    border-left: 3px solid {'#28a745' if row['Sentiment'] == 'Positive' else '#dc3545' if row['Sentiment'] == 'Negative' else '#ffc107'};
-                ">
-                    <small><strong>{escape(str(row['Company']))}</strong></small><br>
-                    <small>{sentiment_emoji} {escape(str(row['Headline']))[:60]}...</small><br>
-                    <small style="color: #666;">{escape(str(row['Source']))} • {row['Date']}</small>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Add link button for each headline
-                if st.button(f"📖 Read", key=f"sidebar_link_{idx}", help="Read full article"):
-                    st.markdown(f"**🔗 Article Link:** [{row['Source']}]({row['News_Link']})")
+                status = "Available" if count else "No result"
+                st.markdown(f"**{selected}** · {status} ({count})")
+            if len(selected_companies) > 8:
+                st.caption(f"{len(selected_companies) - 8} more companies are in the watchlist.")
     
     # Advanced filters in expander
-    with st.sidebar.expander("🔧 Advanced", expanded=False):
+    with st.sidebar.expander("Advanced article filters", expanded=False):
         st.markdown("### 📰 News Filters")
         
         # News type filter with better UX
@@ -795,7 +652,7 @@ def main():
     with col1:
         st.markdown("""
         <div class="metric-card summary-card sentiment-positive">
-            <h3>📈 Positive News</h3>
+            <h4>Positive news</h4>
             <h2>{}</h2>
             <p>Articles with positive sentiment</p>
         </div>
@@ -804,7 +661,7 @@ def main():
     with col2:
         st.markdown("""
         <div class="metric-card summary-card sentiment-negative">
-            <h3>📉 Negative News</h3>
+            <h4>Negative news</h4>
             <h2>{}</h2>
             <p>Articles with negative sentiment</p>
         </div>
@@ -813,7 +670,7 @@ def main():
     with col3:
         st.markdown("""
         <div class="metric-card summary-card sentiment-neutral">
-            <h3>⚖️ Neutral News</h3>
+            <h4>Neutral news</h4>
             <h2>{}</h2>
             <p>Articles with neutral sentiment</p>
         </div>
@@ -823,7 +680,7 @@ def main():
         avg_sentiment = df_filtered['Sentiment_Score'].mean()
         st.markdown("""
         <div class="metric-card summary-card">
-            <h3>🎯 Avg Sentiment</h3>
+            <h4>Average sentiment</h4>
             <h2>{:.2f}</h2>
             <p>Overall sentiment score</p>
         </div>
@@ -900,14 +757,14 @@ def main():
         st.warning("No data available for the selected filters.")
     
     # Analysis insights
-    st.subheader("💡 Key Insights")
+    st.subheader("Key insights")
     
     insights_col1, insights_col2 = st.columns(2)
     
     with insights_col1:
         st.markdown("""
         <div class="metric-card">
-            <h4>🔍 Sentiment Analysis Summary</h4>
+            <h4>Sentiment summary</h4>
             <ul>
                 <li>Most covered company: <strong>{}</strong></li>
                 <li>Dominant sentiment: <strong>{}</strong></li>
@@ -925,7 +782,7 @@ def main():
     with insights_col2:
         st.markdown("""
         <div class="metric-card">
-            <h4>📊 Sentiment Signal Summary</h4>
+            <h4>Signal quality</h4>
             <ul>
                 <li>High absolute-sentiment news: <strong>{}%</strong></li>
                 <li>Most active news type: <strong>{}</strong></li>

@@ -27,10 +27,10 @@ render_page_header = design_system.render_page_header
 
 # Page configuration
 st.set_page_config(
-    page_title="📈 Market Data",
+    page_title="Markets · Financial News Analyzer",
     page_icon="📈",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 def get_company_database():
@@ -149,7 +149,7 @@ def create_market_overview_chart(df):
     fig = go.Figure()
     
     # Color based on price change
-    colors = ['#7B9669' if change > 0 else '#404E3B' if change < 0 else '#6C8480'
+    colors = ['#10B981' if change > 0 else '#F43F5E' if change < 0 else '#94A3B8'
               for change in df_sorted['Change_Pct']]
     
     fig.add_trace(go.Bar(
@@ -167,17 +167,17 @@ def create_market_overview_chart(df):
         title="Market Overview - Daily Performance",
         xaxis_title="Stock Symbol",
         yaxis_title="Change (%)",
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        font=dict(color='#475569'),
         showlegend=False
     )
     
     # Add zero line
-    fig.add_hline(y=0, line_dash="dash", line_color="white", opacity=0.5)
+    fig.add_hline(y=0, line_dash="dash", line_color="#94A3B8", opacity=0.65)
     
-    return fig
+    return design_system.style_plotly_chart(fig)
 
 def create_price_chart(df_historical, symbol):
     """Create candlestick price chart"""
@@ -187,8 +187,8 @@ def create_price_chart(df_historical, symbol):
         high=df_historical['High'],
         low=df_historical['Low'],
         close=df_historical['Close'],
-        increasing_line_color='#7B9669',
-        decreasing_line_color='#404E3B',
+        increasing_line_color='#10B981',
+        decreasing_line_color='#F43F5E',
         name=symbol
     ))
     
@@ -201,7 +201,7 @@ def create_price_chart(df_historical, symbol):
         y=df_historical['MA20'],
         mode='lines',
         name='MA20',
-        line=dict(color='#BAC8B1', width=2)
+        line=dict(color='#2563EB', width=2)
     ))
     
     fig.add_trace(go.Scatter(
@@ -209,21 +209,21 @@ def create_price_chart(df_historical, symbol):
         y=df_historical['MA50'],
         mode='lines',
         name='MA50',
-        line=dict(color='#6C8480', width=2)
+        line=dict(color='#8B5CF6', width=2)
     ))
     
     fig.update_layout(
         title=f"{symbol} - Price Chart with Moving Averages",
         xaxis_title="Date",
         yaxis_title="Price ($)",
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        font=dict(color='#475569'),
         xaxis_rangeslider_visible=False
     )
     
-    return fig
+    return design_system.style_plotly_chart(fig)
 
 def create_volume_chart(df_historical):
     """Create volume chart"""
@@ -232,7 +232,7 @@ def create_volume_chart(df_historical):
     fig.add_trace(go.Bar(
         x=df_historical['Date'],
         y=df_historical['Volume'],
-        marker_color='#6C8480',
+        marker_color='#64748B',
         opacity=0.7,
         name='Volume'
     ))
@@ -241,20 +241,20 @@ def create_volume_chart(df_historical):
         title="Trading Volume",
         xaxis_title="Date",
         yaxis_title="Volume",
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        font=dict(color='#475569'),
         showlegend=False
     )
     
-    return fig
+    return design_system.style_plotly_chart(fig)
 
 def create_category_performance_chart(df):
     """Show the actual average daily return for each displayed category."""
     category_returns = df.groupby('Category', as_index=False)['Change_Pct'].mean()
     category_returns = category_returns.sort_values('Change_Pct')
-    colors = ['#7B9669' if value >= 0 else '#404E3B' for value in category_returns['Change_Pct']]
+    colors = ['#10B981' if value >= 0 else '#F43F5E' for value in category_returns['Change_Pct']]
     fig = go.Figure(data=go.Bar(
         x=category_returns['Category'],
         y=category_returns['Change_Pct'],
@@ -266,12 +266,12 @@ def create_category_performance_chart(df):
         title="Average Daily Performance by Category",
         xaxis_title="Category",
         yaxis_title="Average change (%)",
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        font=dict(color='#475569'),
     )
-    return fig
+    return design_system.style_plotly_chart(fig)
 
 def main():
     """Main function for Market Data page"""
@@ -279,10 +279,10 @@ def main():
     render_app_shell("market")
     
     render_page_header(
-        "Market data without the noise",
-        "Compare the latest available closes, inspect price history, and narrow the universe with focused controls.",
-        eyebrow="Market workspace",
-        badges=["Latest daily close", "Interactive charts", "Yahoo Finance provider"],
+        "Read the market before chasing the move.",
+        "Compare the latest available closes, narrow the universe, and inspect price history for the symbol that matters.",
+        eyebrow="Market performance",
+        badges=["Latest daily close", "Focused comparison", "Five-minute cache"],
     )
     
     # Live provider data. We intentionally do not fall back to random values:
@@ -306,10 +306,13 @@ def main():
     )
     
     # Sidebar controls
-    st.sidebar.header("📊 Market Controls")
+    st.sidebar.header("Market controls")
+    st.sidebar.caption("Search directly, or browse a compact company universe by industry.")
     
+    selected_categories: list[str] = []
+
     # Global company search
-    st.sidebar.markdown("### 🔍 Company Search")
+    st.sidebar.markdown("### Company search")
     search_term = st.sidebar.text_input(
         "Search companies",
         placeholder="Type any company name (IBM, Apple, Tesla...)",
@@ -343,7 +346,7 @@ def main():
             filtered_market_df = pd.DataFrame()  # Empty dataframe
     else:
         # Category filter when not searching
-        st.sidebar.markdown("### 🏢 Browse by Industry")
+        st.sidebar.markdown("### Industries")
         company_db = get_company_database()
         categories = list(company_db.keys())
         selected_categories = st.sidebar.multiselect(
@@ -457,7 +460,7 @@ def main():
         historical_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
     
     # Market overview metrics
-    st.subheader("🌍 Market Overview")
+    st.subheader("Market overview")
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -465,7 +468,7 @@ def main():
         gainers = len(filtered_market_df[filtered_market_df['Change_Pct'] > 0])
         st.markdown(f"""
         <div class="metric-card summary-card price-up">
-            <h3>📈 Gainers</h3>
+            <h4>Gainers</h4>
             <h2>{gainers}</h2>
             <p>Stocks up today</p>
         </div>
@@ -475,7 +478,7 @@ def main():
         losers = len(filtered_market_df[filtered_market_df['Change_Pct'] < 0])
         st.markdown(f"""
         <div class="metric-card summary-card price-down">
-            <h3>📉 Losers</h3>
+            <h4>Losers</h4>
             <h2>{losers}</h2>
             <p>Stocks down today</p>
         </div>
@@ -486,7 +489,7 @@ def main():
         status_class = "price-up" if avg_change > 0 else "price-down" if avg_change < 0 else "price-stable"
         st.markdown(f"""
         <div class="metric-card summary-card {status_class}">
-            <h3>📊 Avg Change</h3>
+            <h4>Average change</h4>
             <h2>{avg_change}%</h2>
             <p>Market average</p>
         </div>
@@ -496,7 +499,7 @@ def main():
         total_volume = filtered_market_df['Volume'].sum() / 1_000_000  # Convert to millions
         st.markdown(f"""
         <div class="metric-card summary-card price-stable">
-            <h3>📊 Total Volume</h3>
+            <h4>Total volume</h4>
             <h2>{total_volume:.0f}M</h2>
             <p>Shares traded</p>
         </div>
@@ -508,7 +511,7 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Stock analysis section
-    st.subheader(f"🔍 {selected_stock} Analysis")
+    st.subheader(f"{selected_stock} analysis")
     
     # Stock metrics
     stock_data = market_df[market_df['Symbol'] == selected_stock].iloc[0]
@@ -584,7 +587,7 @@ def main():
             st.markdown('</div>', unsafe_allow_html=True)
     
     # Market analysis
-    st.subheader("📊 Market Analysis")
+    st.subheader("Market analysis")
     
     col1, col2 = st.columns(2)
     
@@ -595,19 +598,20 @@ def main():
     
     with col2:
         # Top performers table
-        st.markdown("### 🏆 Top Performers")
+        st.markdown("### Top performers")
         top_performers = filtered_market_df.nlargest(5, 'Change_Pct')[['Symbol', 'Company', 'Category', 'Change_Pct', 'Price']]
         st.dataframe(top_performers, use_container_width=True)
         
-        st.markdown("### 📉 Worst Performers")
+        st.markdown("### Bottom performers")
         worst_performers = filtered_market_df.nsmallest(5, 'Change_Pct')[['Symbol', 'Company', 'Category', 'Change_Pct', 'Price']]
         st.dataframe(worst_performers, use_container_width=True)
     
     # Market data table with category info
-    st.subheader("📋 Complete Market Data")
+    st.subheader("Complete market data")
     
     # Show filtered data summary
-    st.info(f"Showing {len(filtered_market_df)} stocks from {len(selected_categories)} categories")
+    visible_category_count = filtered_market_df['Category'].nunique()
+    st.info(f"Showing {len(filtered_market_df)} stocks across {visible_category_count} categories")
     
     # Display comprehensive market data
     display_columns = ['Symbol', 'Company', 'Category', 'Price', 'Change', 'Change_Pct', 
@@ -619,7 +623,7 @@ def main():
     )
     
     # Add refresh button
-    if st.button("🔄 Refresh Data"):
+    if st.button("Refresh data"):
         st.rerun()
 
     st.caption(

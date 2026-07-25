@@ -12,29 +12,41 @@ type PageKey = "home" | "analysis" | "market" | "support";
 interface NavItem {
   key: PageKey;
   label: string;
-  icon: string;
+  shortLabel: string;
 }
 
 const NAVIGATION: NavItem[] = [
-  { key: "home", label: "Genel Bakış", icon: "◌" },
-  { key: "analysis", label: "Haberler", icon: "✦" },
-  { key: "market", label: "Piyasalar", icon: "↗" },
-  { key: "support", label: "Destek", icon: "?" },
+  { key: "home", label: "Overview", shortLabel: "01" },
+  { key: "analysis", label: "News research", shortLabel: "02" },
+  { key: "market", label: "Markets", shortLabel: "03" },
+  { key: "support", label: "Support", shortLabel: "04" },
 ];
 
 function App({ args }: ComponentProps) {
   const activePage = (args.active_page as PageKey | undefined) ?? "home";
 
   useEffect(() => {
-    Streamlit.setFrameHeight(72);
+    Streamlit.setFrameHeight(76);
   }, []);
 
   return (
     <header className="shell" aria-label="Financial News Analyzer navigation">
-      <a className="brand-cluster" href="#" onClick={(e) => e.preventDefault()}>
-        <span className="brand-mark" aria-hidden="true">F</span>
-        <span className="brand-name">Financial News Analyzer</span>
-      </a>
+      <button
+        type="button"
+        className="brand-cluster"
+        aria-label="Go to overview"
+        onClick={() => Streamlit.setComponentValue("home")}
+      >
+        <span className="brand-mark" aria-hidden="true">
+          <span className="brand-bar brand-bar-one" />
+          <span className="brand-bar brand-bar-two" />
+          <span className="brand-bar brand-bar-three" />
+        </span>
+        <span className="brand-copy">
+          <span className="brand-name">Financial News</span>
+          <span className="brand-product">Analyzer</span>
+        </span>
+      </button>
 
       <nav className="navigation" aria-label="Workspaces">
         {NAVIGATION.map((item) => {
@@ -47,9 +59,8 @@ function App({ args }: ComponentProps) {
               aria-current={isActive ? "page" : undefined}
               onClick={() => Streamlit.setComponentValue(item.key)}
             >
-              <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+              <span className="nav-index" aria-hidden="true">{item.shortLabel}</span>
               <span className="nav-label">{item.label}</span>
-              {isActive && <span className="nav-dot" aria-hidden="true" />}
             </button>
           );
         })}
@@ -57,7 +68,7 @@ function App({ args }: ComponentProps) {
 
       <div className="live-status" aria-label="Live provider data available">
         <span className="status-pulse" aria-hidden="true" />
-        <span>Canlı veri</span>
+        <span>Provider connected</span>
       </div>
     </header>
   );
