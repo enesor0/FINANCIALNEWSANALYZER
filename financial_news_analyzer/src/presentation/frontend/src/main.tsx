@@ -20,7 +20,7 @@ function App({ args }: ComponentProps) {
   const activePage = (args.active_page as PageKey | undefined) ?? "home";
 
   useEffect(() => {
-    Streamlit.setFrameHeight(82);
+    Streamlit.setFrameHeight(66);
   }, []);
 
   return (
