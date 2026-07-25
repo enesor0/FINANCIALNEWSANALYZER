@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ComponentProps,
@@ -9,7 +9,13 @@ import "./styles.css";
 
 type PageKey = "home" | "analysis" | "market" | "support";
 
-const navigation: Array<{ key: PageKey; label: string; icon: string }> = [
+interface NavItem {
+  key: PageKey;
+  label: string;
+  icon: string;
+}
+
+const NAVIGATION: NavItem[] = [
   { key: "home", label: "Overview", icon: "◌" },
   { key: "analysis", label: "Research", icon: "✦" },
   { key: "market", label: "Markets", icon: "↗" },
@@ -18,37 +24,65 @@ const navigation: Array<{ key: PageKey; label: string; icon: string }> = [
 
 function App({ args }: ComponentProps) {
   const activePage = (args.active_page as PageKey | undefined) ?? "home";
+  const [hovered, setHovered] = useState<PageKey | null>(null);
 
   useEffect(() => {
-    Streamlit.setFrameHeight(82);
+    Streamlit.setFrameHeight(86);
   }, []);
+
+  const activeIndex = useMemo(
+    () => Math.max(0, NAVIGATION.findIndex((item) => item.key === activePage)),
+    [activePage],
+  );
 
   return (
     <header className="shell" aria-label="Financial News Analyzer navigation">
-      <div className="brand-cluster">
-        <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
+      <div className="shell-glow" aria-hidden="true" />
+
+      <a className="brand-cluster" href="#" onClick={(e) => e.preventDefault()}>
+        <span className="brand-mark" aria-hidden="true">
+          <i /><i /><i />
+        </span>
         <div className="brand-copy">
           <span className="brand-name">Financial News</span>
           <span className="brand-subtitle">Intelligence desk</span>
         </div>
-      </div>
+      </a>
+
       <nav className="navigation" aria-label="Workspaces">
-        {navigation.map((item) => (
-          <button
-            type="button"
-            key={item.key}
-            className={item.key === activePage ? "nav-item active" : "nav-item"}
-            aria-current={item.key === activePage ? "page" : undefined}
-            onClick={() => Streamlit.setComponentValue(item.key)}
-          >
-            <span aria-hidden="true">{item.icon}</span>
-            {item.label}
-          </button>
-        ))}
+        <span
+          className="nav-indicator"
+          aria-hidden="true"
+          style={{
+            transform: `translateX(${activeIndex * 100}%)`,
+            opacity: hovered ? 0 : 1,
+          }}
+        />
+        {NAVIGATION.map((item) => {
+          const isActive = item.key === activePage;
+          return (
+            <button
+              type="button"
+              key={item.key}
+              className={isActive ? "nav-item active" : "nav-item"}
+              aria-current={isActive ? "page" : undefined}
+              onMouseEnter={() => setHovered(item.key)}
+              onMouseLeave={() => setHovered(null)}
+              onClick={() => Streamlit.setComponentValue(item.key)}
+            >
+              <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+              {isActive && <span className="nav-dot" aria-hidden="true" />}
+            </button>
+          );
+        })}
       </nav>
+
       <div className="live-status" aria-label="Live provider data available">
-        <span className="status-pulse" aria-hidden="true" />
-        <div>
+        <span className="status-pulse" aria-hidden="true">
+          <span className="status-pulse-ring" />
+        </span>
+        <div className="live-status-copy">
           <strong>Provider live</strong>
           <small>Research workspace</small>
         </div>
