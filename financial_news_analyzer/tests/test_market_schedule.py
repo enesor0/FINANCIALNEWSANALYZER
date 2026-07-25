@@ -41,6 +41,29 @@ class MarketScheduleTests(unittest.TestCase):
 
         self.assertEqual(next_open, eastern.localize(datetime(2026, 8, 3, 9, 30)))
 
+    def test_sunday_thursday_schedule_supports_saudi_market(self):
+        riyadh = pytz.timezone("Asia/Riyadh")
+        market = Market(
+            code="TADAWUL",
+            name="Saudi Stock Exchange",
+            country_code="SA",
+            country_flag="🇸🇦",
+            timezone="Asia/Riyadh",
+            region=MarketRegion.MENA_AFRICA,
+            open_time=time(10, 0),
+            close_time=time(15, 0),
+            trading_weekdays={6, 0, 1, 2, 3},
+        )
+
+        self.assertEqual(
+            market.get_current_status(riyadh.localize(datetime(2026, 7, 26, 11, 0))),
+            MarketStatus.OPEN,
+        )
+        self.assertEqual(
+            market.get_current_status(riyadh.localize(datetime(2026, 7, 24, 11, 0))),
+            MarketStatus.CLOSED,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

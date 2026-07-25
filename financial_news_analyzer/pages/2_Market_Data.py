@@ -20,6 +20,10 @@ from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service i
     LiveDataUnavailable,
     YahooFinanceService,
 )
+from financial_news_analyzer.src.presentation.design_system import (
+    apply_design_system,
+    render_page_header,
+)
 
 # Page configuration
 st.set_page_config(
@@ -473,7 +477,7 @@ def get_live_universe():
     """Return a balanced, bounded symbol set for the live market overview."""
     instruments = []
     for category, companies in get_company_database().items():
-        instruments.extend((symbol, company, category) for company, symbol in list(companies.items())[:5])
+        instruments.extend((symbol, company, category) for company, symbol in list(companies.items())[:3])
     return instruments
 
 
@@ -597,52 +601,40 @@ def create_volume_chart(df_historical):
     
     return fig
 
-def create_correlation_heatmap(df):
-    """Create correlation heatmap for selected metrics"""
-    # Select numeric columns for correlation
-    numeric_cols = ['Price', 'Change_Pct', 'Volume', 'Market_Cap', 'PE_Ratio']
-    correlation_matrix = df[numeric_cols].corr()
-    
-    fig = go.Figure(data=go.Heatmap(
-        z=correlation_matrix.values,
-        x=correlation_matrix.columns,
-        y=correlation_matrix.columns,
-        colorscale='RdBu',
-        zmid=0,
-        text=correlation_matrix.values,
-        texttemplate='%{text:.2f}',
-        textfont=dict(color='white'),
-        hoverongaps=False
+def create_category_performance_chart(df):
+    """Show the actual average daily return for each displayed category."""
+    category_returns = df.groupby('Category', as_index=False)['Change_Pct'].mean()
+    category_returns = category_returns.sort_values('Change_Pct')
+    colors = ['#00D4AA' if value >= 0 else '#FF6B6B' for value in category_returns['Change_Pct']]
+    fig = go.Figure(data=go.Bar(
+        x=category_returns['Category'],
+        y=category_returns['Change_Pct'],
+        marker_color=colors,
+        text=[f"{value:+.2f}%" for value in category_returns['Change_Pct']],
+        textposition='auto',
     ))
-    
     fig.update_layout(
-        title="Market Metrics Correlation",
+        title="Average Daily Performance by Category",
+        xaxis_title="Category",
+        yaxis_title="Average change (%)",
         template="plotly_dark",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white')
+        font=dict(color='white'),
     )
-    
     return fig
 
 def main():
     """Main function for Market Data page"""
     load_custom_css()
+    apply_design_system()
     
-    # Header - matching Start.py design
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); 
-                color: #ffffff; padding: 2.5rem; border-radius: 12px; text-align: center; 
-                margin-bottom: 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.4); 
-                border: 1px solid #3a3a3a;">
-        <h1 style="margin: 0; font-size: 3rem; font-weight: 700; color: #ffffff;">
-            📈 Market Data Analysis
-        </h1>
-        <h3 style="font-weight: 300; font-size: 1.5rem; color: #bdc3c7; margin: 1rem 0;">
-            Latest Available Market Data and Price History
-        </h3>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        "Market data without the noise",
+        "Compare the latest available closes, inspect price history, and narrow the universe with focused controls.",
+        eyebrow="Market workspace",
+        badges=["Latest daily close", "Interactive charts", "Yahoo Finance provider"],
+    )
     
     # Live provider data. We intentionally do not fall back to random values:
     # a missing provider must be visible to the user instead of looking real.
@@ -949,7 +941,7 @@ def main():
     
     with col1:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.plotly_chart(create_correlation_heatmap(market_df), use_container_width=True)
+        st.plotly_chart(create_category_performance_chart(filtered_market_df), use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
@@ -981,9 +973,10 @@ def main():
     if st.button("🔄 Refresh Data"):
         st.rerun()
     
-    # Broker Links Section
+    # External broker links
     st.markdown("---")
-    st.markdown("## 🏦 Trusted Brokers & Trading Platforms")
+    st.markdown("## 🏦 External Broker & Platform Links")
+    st.caption("These links are informational only, not endorsements or investment recommendations. Verify eligibility, fees, and regulation independently.")
     
     # Global Brokers
     col1, col2 = st.columns(2)

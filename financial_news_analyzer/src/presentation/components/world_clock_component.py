@@ -42,9 +42,9 @@ class WorldClockComponent:
         regions = self._group_markets_by_region()
         
         for region_name, markets in regions.items():
-            with container.expander(f"{region_name} ({len(markets)} markets)"):
+            with container.expander(f"{region_name} ({len(markets)} markets)") as region_container:
                 for market in markets:
-                    self._render_market_card(market, container)
+                    self._render_market_card(market, region_container)
     
     def _get_global_markets(self) -> list[Market]:
         """Get list of global financial markets"""
@@ -81,9 +81,11 @@ class WorldClockComponent:
             
             # MENA & Africa
             Market("DFM", "Dubai Financial Market", "AE", "🇦🇪", "Asia/Dubai", 
-                   MarketRegion.MENA_AFRICA, time(10, 0), time(14, 0), currency="AED"),
+                   MarketRegion.MENA_AFRICA, time(10, 0), time(14, 0),
+                   trading_weekdays={0, 1, 2, 3, 4}, currency="AED"),
             Market("Tadawul", "Saudi Stock Exchange", "SA", "🇸🇦", "Asia/Riyadh", 
-                   MarketRegion.MENA_AFRICA, time(10, 0), time(15, 0), currency="SAR"),
+                   MarketRegion.MENA_AFRICA, time(10, 0), time(15, 0),
+                   trading_weekdays={6, 0, 1, 2, 3}, currency="SAR"),
         ]
     
     def _group_markets_by_region(self) -> Dict[str, list[Market]]:
@@ -111,52 +113,38 @@ class WorldClockComponent:
     
     def _render_market_card(self, market: Market, container):
         """Render individual market card"""
-        # Get current status and time
         current_time = market.get_formatted_time()
         current_date = market.get_formatted_date()
-        status = market.current_status
-        
-        # Create market card HTML
-        card_html = f"""
-        <div style="padding: 8px; margin: 4px 0; border-left: 3px solid {market.status_color}; 
-                    background-color: rgba(255,255,255,0.05); border-radius: 5px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <strong style="font-size: 0.9em;">{market.display_name}</strong><br>
-                    <span style="font-size: 1.1em; font-weight: bold;">{current_time}</span>
-                    <span style="font-size: 0.8em; color: #888;"> ({current_date})</span>
-                </div>
-                <div style="text-align: right;">
-                    <span style="color: {market.status_color}; font-weight: bold; font-size: 0.8em;">
-                        {market.status_emoji} {status.value.upper()}
-                    </span><br>
-                    <span style="font-size: 0.7em; color: #666;">
-                        {market.get_trading_hours()}
-                    </span>
-                </div>
-            </div>
-        """
-        
-        # Add countdown information
+        status = market.refresh_status()
+
+        countdown_html = ""
         if status == MarketStatus.CLOSED:
             time_until_open = market.time_until_open()
             if time_until_open:
-                card_html += f"""
-                <div style="margin-top: 4px; font-size: 0.7em; color: #999;">
-                    Opens in: {time_until_open}
-                </div>
-                """
+                countdown_html = (
+                    f'<div style="margin-top: 4px; font-size: 0.7em; color: #999;">'
+                    f'Opens in: {time_until_open}</div>'
+                )
         elif status == MarketStatus.OPEN:
             time_until_close = market.time_until_close()
             if time_until_close:
-                card_html += f"""
-                <div style="margin-top: 4px; font-size: 0.7em; color: #999;">
-                    Closes in: {time_until_close}
-                </div>
-                """
-        
-        card_html += "</div>"
-        
+                countdown_html = (
+                    f'<div style="margin-top: 4px; font-size: 0.7em; color: #999;">'
+                    f'Closes in: {time_until_close}</div>'
+                )
+
+        card_html = (
+            f'<div style="padding:8px;margin:4px 0;border-left:3px solid {market.status_color};'
+            f'background-color:rgba(255,255,255,0.05);border-radius:5px;">'
+            f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+            f'<div><strong style="font-size:0.9em;">{market.display_name}</strong><br>'
+            f'<span style="font-size:1.1em;font-weight:bold;">{current_time}</span>'
+            f'<span style="font-size:0.8em;color:#888;"> ({current_date})</span></div>'
+            f'<div style="text-align:right;"><span style="color:{market.status_color};'
+            f'font-weight:bold;font-size:0.8em;">{market.status_emoji} {status.value.upper()}'
+            f'</span><br><span style="font-size:0.7em;color:#999;">{market.get_trading_hours()}'
+            f'</span></div></div>{countdown_html}</div>'
+        )
         container.markdown(card_html, unsafe_allow_html=True)
     
     def get_market_by_code(self, code: str) -> Market:
@@ -168,7 +156,7 @@ class WorldClockComponent:
     
     def get_open_markets(self) -> list[Market]:
         """Get currently open markets"""
-        return [market for market in self._markets if market.is_trading]
+        return [market for market in self._markets if market.refresh_status() == MarketStatus.OPEN]
     
     def get_markets_summary(self) -> Dict[str, Any]:
         """Get summary of all markets"""

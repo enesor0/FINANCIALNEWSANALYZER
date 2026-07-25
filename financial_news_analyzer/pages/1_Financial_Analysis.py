@@ -22,6 +22,10 @@ from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service i
     LiveDataUnavailable,
     YahooFinanceService,
 )
+from financial_news_analyzer.src.presentation.design_system import (
+    apply_design_system,
+    render_page_header,
+)
 
 # Page configuration
 st.set_page_config(
@@ -647,7 +651,7 @@ def categorize_news(title: str) -> str:
     normalized = title.lower()
     if any(word in normalized for word in ('earnings', 'revenue', 'guidance', 'quarter')):
         return 'Earnings'
-    if any(word in normalized for word in ('acquire', 'merger', 'deal', 'takeover')):
+    if any(word in normalized for word in ('acquire', 'acquisition', 'merger', 'takeover')):
         return 'Merger & Acquisition'
     if any(word in normalized for word in ('ceo', 'cfo', 'executive', 'appoints')):
         return 'Leadership Change'
@@ -661,12 +665,14 @@ def load_live_news(companies):
     """Fetch provider articles and derive sentiment from their actual text."""
     analyzer = FinancialSentimentAnalyzer()
     rows = []
+    seen_links = set()
     for company in companies:
         for article in YahooFinanceService.search_news(company):
             score = analyzer.analyze_text(f"{article['title']} {article['summary']}").score
             sentiment = 'Positive' if score > 0.2 else 'Negative' if score < -0.2 else 'Neutral'
-            if not article['link']:
+            if not article['link'] or article['link'] in seen_links:
                 continue
+            seen_links.add(article['link'])
             rows.append({
                 'Date': article['published_at'].date().isoformat(),
                 'Company': article['company'],
@@ -766,26 +772,19 @@ def create_company_sentiment_chart(df):
 def main():
     """Main function for Financial Analysis page"""
     load_custom_css()
+    apply_design_system()
 
     if st.sidebar.button("↻ Refresh live news", use_container_width=True):
         load_live_news.clear()
         st.session_state.pop('cached_df', None)
         st.rerun()
     
-    # Header - matching Start.py design
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); 
-                color: #ffffff; padding: 2.5rem; border-radius: 12px; text-align: center; 
-                margin-bottom: 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.4); 
-                border: 1px solid #3a3a3a;">
-        <h1 style="margin: 0; font-size: 3rem; font-weight: 700; color: #ffffff;">
-            📊 Financial News Analysis
-        </h1>
-        <h3 style="font-weight: 300; font-size: 1.5rem; color: #bdc3c7; margin: 1rem 0;">
-            Provider-Linked Financial News with Explainable Sentiment Scoring
-        </h3>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        "Financial news, made actionable",
+        "Follow selected companies, compare the current news tone, and open each original source before deciding what matters.",
+        eyebrow="Research desk",
+        badges=["Source links included", "Keyword sentiment", "Company-first workflow"],
+    )
 
     st.caption(
         "News source: Yahoo Finance via yfinance. Sentiment is a transparent keyword baseline, "
@@ -833,6 +832,11 @@ def main():
     
     # Get company database
     company_db = get_company_database()
+
+    if 'active_companies' not in st.session_state:
+        st.session_state.active_companies = [
+            'Apple', 'Microsoft', 'Google', 'Amazon', 'Meta', 'Tesla'
+        ]
     
     # Sidebar filters
     st.sidebar.header("🔍 Analysis Filters")
@@ -851,6 +855,9 @@ def main():
                 if key.startswith(('multi_', 'browse_')):
                     del st.session_state[key]
             st.session_state.selected_categories = ['Technology', 'Finance']
+            st.session_state.active_companies = [
+                'Apple', 'Microsoft', 'Google', 'Amazon', 'Meta', 'JPMorgan Chase'
+            ]
             st.session_state.preset_applied = True
             st.sidebar.success("✅ Popular sectors selected!")
             st.rerun()
@@ -863,6 +870,10 @@ def main():
                 if key.startswith(('multi_', 'browse_')):
                     del st.session_state[key]
             st.session_state.selected_categories = list(company_db.keys())
+            st.session_state.active_companies = [
+                'Apple', 'JPMorgan Chase', 'Johnson & Johnson', 'ExxonMobil',
+                'Walmart', 'Tesla', 'American Tower', 'Boeing'
+            ]
             st.session_state.preset_applied = True
             st.sidebar.success("✅ All markets selected!")
             st.rerun()
@@ -877,6 +888,7 @@ def main():
                 if key.startswith(('multi_', 'browse_')):
                     del st.session_state[key]
             st.session_state.selected_categories = ['Healthcare']
+            st.session_state.active_companies = ['Johnson & Johnson', 'Pfizer', 'Merck', 'Abbott Laboratories']
             st.session_state.preset_applied = True
             st.sidebar.success("✅ Healthcare selected!")
             st.rerun()
@@ -889,6 +901,7 @@ def main():
                 if key.startswith(('multi_', 'browse_')):
                     del st.session_state[key]
             st.session_state.selected_categories = ['Energy']
+            st.session_state.active_companies = ['ExxonMobil', 'Chevron', 'ConocoPhillips', 'NextEra Energy']
             st.session_state.preset_applied = True
             st.sidebar.success("✅ Energy selected!")
             st.rerun()
@@ -980,7 +993,7 @@ def main():
                 if key.startswith('multi_'):
                     del st.session_state[key]
             # Set new selection
-            st.session_state.quick_selection = ['Apple', 'Microsoft', 'Google', 'Amazon', 'Meta', 'Tesla']
+            st.session_state.active_companies = ['Apple', 'Microsoft', 'Google', 'Amazon', 'Meta', 'Tesla']
             st.rerun()
     
     with col2:
@@ -991,7 +1004,7 @@ def main():
                 if key.startswith('multi_'):
                     del st.session_state[key]
             # Set new selection
-            st.session_state.quick_selection = ['JPMorgan Chase', 'Bank of America', 'Wells Fargo', 'Goldman Sachs']
+            st.session_state.active_companies = ['JPMorgan Chase', 'Bank of America', 'Wells Fargo', 'Goldman Sachs']
             st.rerun()
     
     col3, col4 = st.sidebar.columns(2)
@@ -1004,7 +1017,7 @@ def main():
                 if key.startswith('multi_'):
                     del st.session_state[key]
             # Set new selection
-            st.session_state.quick_selection = ['Johnson & Johnson', 'Pfizer', 'Merck', 'Abbott']
+            st.session_state.active_companies = ['Johnson & Johnson', 'Pfizer', 'Merck', 'Abbott Laboratories']
             st.rerun()
     
     with col4:
@@ -1015,19 +1028,13 @@ def main():
                 if key.startswith('multi_'):
                     del st.session_state[key]
             # Set new selection
-            st.session_state.quick_selection = ['ExxonMobil', 'Chevron', 'ConocoPhillips']
+            st.session_state.active_companies = ['ExxonMobil', 'Chevron', 'ConocoPhillips', 'NextEra Energy']
             st.rerun()
     
-    # Check if we have a quick selection
-    if 'quick_selection' in st.session_state:
-        search_selected = st.session_state.quick_selection
-        # Clear the quick selection after use
-        del st.session_state.quick_selection
-    else:
-        search_selected = []
+    active_selection = st.session_state.active_companies
     
     # Category selection for detailed browsing (only if no search or quick selection)
-    if not search_term and not search_selected:
+    if not search_term:
         st.sidebar.markdown("**🗂️ Browse by Industry:**")
         
         browse_categories = st.sidebar.multiselect(
@@ -1071,7 +1078,7 @@ def main():
         category_selected = []
     
     # Combine selections
-    selected_companies = list(set(search_selected + category_selected))
+    selected_companies = list(dict.fromkeys(active_selection + search_selected + category_selected))
     
     # Show current selection
     if selected_companies:
@@ -1087,9 +1094,10 @@ def main():
                             type="secondary", help="Clear all selected companies"):
             # Clear all related session state
             keys_to_clear = [key for key in st.session_state.keys() 
-                           if key.startswith(('multi_', 'company_', 'browse_', 'quick_'))]
+                           if key.startswith(('multi_', 'company_', 'browse_'))]
             for key in keys_to_clear:
                 del st.session_state[key]
+            st.session_state.active_companies = []
             st.sidebar.success("✅ All selections cleared!")
             st.rerun()
     else:
@@ -1234,11 +1242,11 @@ def main():
         
         selected_sentiments = [sentiment_options[key] for key in selected_sentiment_keys]
         
-        st.markdown("### 🎯 Impact Score")
+        st.markdown("### 🎯 Sentiment Range")
         
         # Impact score filter with better visualization
         impact_range = st.select_slider(
-            "Impact Level",
+            "Sentiment Range",
             options=[
                 "Very Negative (-1.0 to -0.6)",
                 "Negative (-0.6 to -0.2)", 
@@ -1248,7 +1256,7 @@ def main():
                 "All Levels"
             ],
             value="All Levels",
-            help="Filter by news impact score"
+            help="Filter by the explainable sentiment score"
         )
         
         # Convert impact range to numeric values
@@ -1272,7 +1280,7 @@ def main():
         **Companies:** {len(selected_companies) if selected_companies else 0}  
         **News Types:** {len(selected_news_types)}  
         **Sentiments:** {len(selected_sentiments)}  
-        **Impact:** {impact_range}
+        **Sentiment range:** {impact_range}
         """)
         
         # Reset filters button
@@ -1445,7 +1453,7 @@ def main():
                         <p style="margin: 8px 0 0 0;">
                             {sentiment_color} <strong>{row['Sentiment']}</strong> 
                             (Score: {row['Sentiment_Score']:.2f}) • 
-                            Impact: {row['Impact_Score']:.2f}
+                            Signal strength: {row['Impact_Score']:.2f}
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -1506,9 +1514,9 @@ def main():
     with insights_col2:
         st.markdown("""
         <div class="metric-card">
-            <h4>📊 Market Impact Analysis</h4>
+            <h4>📊 Sentiment Signal Summary</h4>
             <ul>
-                <li>High impact news: <strong>{}%</strong></li>
+                <li>High absolute-sentiment news: <strong>{}%</strong></li>
                 <li>Most active news type: <strong>{}</strong></li>
                 <li>Top news source: <strong>{}</strong></li>
                 <li>Sentiment volatility: <strong>{}</strong></li>

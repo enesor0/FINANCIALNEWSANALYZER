@@ -4,7 +4,7 @@ Represents financial markets with status and schedule information
 """
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Set
 from enum import Enum
 import pytz
 
@@ -48,6 +48,7 @@ class Market:
     # Trading schedule
     open_time: time  # Market opening time (local)
     close_time: time  # Market closing time (local)
+    trading_weekdays: Optional[Set[int]] = None  # Monday=0 ... Sunday=6
     
     # Current status
     current_status: Optional[MarketStatus] = None
@@ -67,6 +68,9 @@ class Market:
         
         if self.indices is None:
             self.indices = []
+
+        if self.trading_weekdays is None:
+            self.trading_weekdays = {0, 1, 2, 3, 4}
         
         # Update current status if not provided
         if self.current_status is None:
@@ -81,7 +85,7 @@ class Market:
         try:
             tz = pytz.timezone(self.timezone)
             local_now = now.astimezone(tz) if now is not None else datetime.now(tz)
-            if local_now.weekday() >= 5:
+            if local_now.weekday() not in self.trading_weekdays:
                 return MarketStatus.CLOSED
 
             current_time = local_now.time()
@@ -164,9 +168,14 @@ class Market:
             second=0,
             microsecond=0,
         )
-        while candidate <= now or candidate.weekday() >= 5:
+        while candidate <= now or candidate.weekday() not in self.trading_weekdays:
             candidate += timedelta(days=1)
         return candidate
+
+    def refresh_status(self, now: Optional[datetime] = None) -> MarketStatus:
+        """Recalculate and store the status for the current render cycle."""
+        self.current_status = self.get_current_status(now)
+        return self.current_status
     
     def time_until_open(self) -> Optional[str]:
         """Get time until market opens (if closed)"""

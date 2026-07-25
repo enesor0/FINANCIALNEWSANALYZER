@@ -1,5 +1,16 @@
-import streamlit as st ##type: ignore 
+import streamlit as st  # type: ignore
 from datetime import datetime
+import sys
+from pathlib import Path
+
+repository_root = Path(__file__).resolve().parents[2]
+if str(repository_root) not in sys.path:
+    sys.path.insert(0, str(repository_root))
+
+from financial_news_analyzer.src.presentation.design_system import (
+    apply_design_system,
+    render_page_header,
+)
 
 # Page configuration
 st.set_page_config(
@@ -198,24 +209,14 @@ def load_custom_css():
 def main():
     """Main function for Contact Us page"""
     load_custom_css()
-    
-    # Header - matching other pages design
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); 
-                color: #ffffff; padding: 2.5rem; border-radius: 12px; text-align: center; 
-                margin-bottom: 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.4); 
-                border: 1px solid #3a3a3a;">
-        <h1 style="margin: 0; font-size: 3rem; font-weight: 700; color: #ffffff;">
-            ✉️ Contact Us
-        </h1>
-        <h3 style="font-weight: 300; font-size: 1.5rem; color: #bdc3c7; margin: 1rem 0;">
-            Get in touch with our team for inquiries, feedback, or support
-        </h3>
-        <p style="color: #95a5a6; margin: 0.5rem 0;">
-            We're here to help you with your financial analysis needs
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    apply_design_system()
+
+    render_page_header(
+        "How can we help?",
+        "Reach the team for product support, feedback, or questions about the research workflow.",
+        eyebrow="Support center",
+        badges=["Email support", "Product feedback", "Research questions"],
+    )
     
     # Contact methods section
     st.subheader("📞 Contact Methods")

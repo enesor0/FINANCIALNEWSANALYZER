@@ -26,6 +26,11 @@ repository_root = current_dir.parent
 if str(repository_root) not in sys.path:
     sys.path.insert(0, str(repository_root))
 
+from financial_news_analyzer.src.presentation.design_system import (
+    apply_design_system,
+    render_page_header,
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -255,6 +260,7 @@ class FinancialAnalyzerApp:
         try:
             # Apply custom styling
             self._apply_styling()
+            apply_design_system()
             
             # Render main header
             self._render_header()
@@ -511,75 +517,17 @@ class FinancialAnalyzerApp:
     
     def _render_header(self):
         """Render application header"""
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); 
-                    color: #ffffff; padding: 2.5rem; border-radius: 12px; text-align: center; 
-                    margin-bottom: 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.4); 
-                    border: 1px solid #3a3a3a;">
-            <h1 style="margin: 0; font-size: 3rem; font-weight: 700; color: #ffffff;">
-                🏦 Financial News Analyzer
-            </h1>
-            <h3 style="font-weight: 300; font-size: 1.5rem; color: #bdc3c7; margin: 1rem 0;">
-                Professional Financial Analysis & Market Intelligence Platform
-            </h3>
-            <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
-                <span class="status-indicator status-healthy">📰 Linked News Sources</span>
-                <span class="status-indicator status-healthy">📊 Latest Daily Market Data</span>
-                <span class="status-indicator status-healthy">🌍 Global Market Times</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_page_header(
+            "Financial News Analyzer",
+            "Provider-linked news, explainable sentiment signals, and market context in one focused workspace.",
+            eyebrow="Market intelligence workspace",
+            badges=["Yahoo Finance linked data", "Explainable signals", "14 market clocks"],
+        )
     
     def _render_sidebar(self):
         """Render sidebar components"""
-        # Navigation menu
-        st.sidebar.markdown("### 🧭 Navigation")
-        
-        # Create styled navigation cards
-        st.sidebar.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 10px 0;
-            border: 1px solid #4a4a4a;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.4)';" 
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 24px; margin-right: 15px;">📰</span>
-                <h3 style="color: white; margin: 0; font-size: 18px;">Financial News Analysis</h3>
-            </div>
-            <p style="color: #bdc3c7; margin: 0; font-size: 14px;">
-                Analyze market sentiment and news impact on financial instruments
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.sidebar.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 10px 0;
-            border: 1px solid #4a4a4a;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.4)';" 
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 24px; margin-right: 15px;">📈</span>
-                <h3 style="color: white; margin: 0; font-size: 18px;">Market Data Analysis</h3>
-            </div>
-            <p style="color: #bdc3c7; margin: 0; font-size: 14px;">
-                View provider-backed daily charts and market data
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
+        # Streamlit already renders the working multipage navigation at the top
+        # of the sidebar. Keep this area compact so market clocks remain visible.
         st.sidebar.markdown("---")
         
         # World clock
@@ -590,6 +538,8 @@ class FinancialAnalyzerApp:
     
     def _render_main_content(self):
         """Render main application content"""
+        self._render_workspace_actions()
+
         # Core features section
         self._render_features()
         
@@ -598,6 +548,29 @@ class FinancialAnalyzerApp:
         
         # Technical information
         self._render_technical_info()
+
+    def _render_workspace_actions(self):
+        """Surface the two primary workflows before secondary information."""
+        st.markdown("### Choose a workspace")
+        st.caption("Start with the task you want to complete. You can return here any time from the sidebar.")
+        news_col, market_col = st.columns(2)
+        with news_col:
+            st.page_link(
+                "pages/1_Financial_Analysis.py",
+                label="Open financial news research",
+                icon="📰",
+                use_container_width=True,
+            )
+            st.caption("Select companies, review linked stories, and compare sentiment signals.")
+        with market_col:
+            st.page_link(
+                "pages/2_Market_Data.py",
+                label="Open market data workspace",
+                icon="📈",
+                use_container_width=True,
+            )
+            st.caption("Explore current closes, price history, and category performance.")
+        st.markdown("<div style='height: .75rem'></div>", unsafe_allow_html=True)
     
     def _render_features(self):
         """Render core features section"""
