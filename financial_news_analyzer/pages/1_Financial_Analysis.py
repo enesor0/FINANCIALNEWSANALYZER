@@ -8,7 +8,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-import numpy as np
 import sys
 import importlib
 from html import escape
@@ -18,13 +17,10 @@ repository_root = Path(__file__).resolve().parents[2]
 if str(repository_root) not in sys.path:
     sys.path.insert(0, str(repository_root))
 
-from financial_news_analyzer.src.domain.services.sentiment_analysis_service import FinancialSentimentAnalyzer
-from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service import (
-    LiveDataUnavailable,
-    YahooFinanceService,
-)
+from financial_news_analyzer.src.application.exceptions import DataProviderUnavailable
 from financial_news_analyzer.src.presentation import design_system
 from financial_news_analyzer.src.presentation.app_shell import render_app_shell
+from financial_news_analyzer.src.presentation.dependencies import get_application_services
 
 design_system = importlib.reload(design_system)
 apply_design_system = design_system.apply_design_system
@@ -37,347 +33,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
-def load_custom_css():
-    """Load custom CSS for consistent styling"""
-    st.markdown("""
-    <style>
-    /* Main theme colors - matching Start.py */
-    :root {
-        --primary-bg: #1a1a1a;
-        --secondary-bg: #2c3e50;
-        --tertiary-bg: #34495e;
-        --accent-color: #00D4AA;
-        --text-primary: #ffffff;
-        --text-secondary: #bdc3c7;
-        --border-color: #3a3a3a;
-        --gradient-1: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-        --gradient-2: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-    
-    /* Hide some Streamlit default elements but keep hamburger menu */
-    footer {visibility: hidden;}
-    
-    /* Force hamburger button to be visible with smooth animation */
-    button[title="View fullscreen"] {
-        visibility: hidden;
-    }
-    
-    /* Enhanced hamburger menu animation */
-    button[data-testid="collapsedControl"] {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        border-radius: 8px !important;
-    }
-    
-    button[data-testid="collapsedControl"]:hover {
-        transform: scale(1.1) rotate(5deg) !important;
-        background-color: rgba(0, 212, 170, 0.1) !important;
-        box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3) !important;
-    }
-    
-    button[data-testid="collapsedControl"]:active {
-        transform: scale(0.95) !important;
-        transition: all 0.1s ease-in-out !important;
-    }
-    
-    /* Modern animations */
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes slideInLeft {
-        from { opacity: 0; transform: translateX(-50px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    
-    @keyframes slideInRight {
-        from { opacity: 0; transform: translateX(50px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(0, 212, 170, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0); }
-    }
-    
-    @keyframes glow {
-        0%, 100% { box-shadow: 0 0 5px rgba(0, 212, 170, 0.3); }
-        50% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.8), 0 0 30px rgba(0, 212, 170, 0.4); }
-    }
-    
-    /* App background with animation */
-    .stApp {
-        background-color: var(--primary-bg) !important;
-        color: var(--text-primary);
-        animation: fadeInUp 0.8s ease-out;
-    }
-    
-    .main .block-container {
-        background: var(--primary-bg) !important;
-        color: var(--text-primary);
-        padding: 2rem;
-        border-radius: 15px;
-        margin-top: 1rem;
-        animation: fadeInUp 1s ease-out;
-    }
-    
-    /* Custom cards with animations */
-    .metric-card {
-        background: var(--gradient-1);
-        padding: 20px;
-        border-radius: 15px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s ease;
-        margin: 10px 0;
-        color: var(--text-primary);
-        animation: slideInLeft 0.6s ease-out;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(0, 212, 170, 0.2);
-        animation: glow 2s infinite;
-    }
-    
-    .sentiment-positive {
-        border-left: 4px solid #00D4AA;
-        background: linear-gradient(135deg, #2c3e50 0%, rgba(0, 212, 170, 0.1) 100%);
-    }
-    
-    .sentiment-negative {
-        border-left: 4px solid #FF6B6B;
-        background: linear-gradient(135deg, #2c3e50 0%, rgba(255, 107, 107, 0.1) 100%);
-    }
-    
-    .sentiment-neutral {
-        border-left: 4px solid #4ECDC4;
-        background: linear-gradient(135deg, #2c3e50 0%, rgba(78, 205, 196, 0.1) 100%);
-    }
-    
-    /* Animated gradient text */
-    .gradient-text {
-        background: var(--gradient-2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-        font-size: 2.5rem;
-        text-align: center;
-        margin-bottom: 30px;
-        animation: slideInRight 1s ease-out;
-        background-size: 200% 200%;
-        animation: gradient-shift 3s ease-in-out infinite, slideInRight 1s ease-out;
-    }
-    
-    @keyframes gradient-shift {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-    }
-    
-    /* Status indicators */
-    .status-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 8px;
-        animation: pulse 2s infinite;
-    }
-    
-    .status-active { background-color: #00D4AA; }
-    .status-warning { background-color: #FFA726; }
-    .status-error { background-color: #FF6B6B; }
-    
-    /* Custom buttons with enhanced smooth transitions */
-    .stButton > button {
-        background: var(--gradient-1);
-        color: white;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 12px 30px;
-        font-weight: 600;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
-        background: var(--tertiary-bg);
-    }
-    
-    .stButton > button:active {
-        transform: translateY(-1px) scale(1.01);
-        transition: all 0.1s ease-in-out;
-    }
-    
-    /* Quick selection buttons */
-    .quick-selection-button {
-        background: linear-gradient(135deg, var(--accent-color) 0%, #2ECC71 100%);
-        border: none;
-        border-radius: 10px;
-        padding: 10px 15px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: white;
-        transition: all 0.3s ease;
-        margin: 2px;
-        box-shadow: 0 3px 10px rgba(0, 212, 170, 0.3);
-        width: 100% !important;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
-    
-    .quick-selection-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 212, 170, 0.5);
-        background: linear-gradient(135deg, #2ECC71 0%, var(--accent-color) 100%);
-    }
-    
-    /* Quick selection container styling */
-    .stButton[data-baseweb="button"] {
-        width: 100% !important;
-    }
-    
-    .stButton > button[kind="secondary"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important;
-        border-radius: 8px !important;
-        color: white !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        padding: 0.5rem 1rem !important;
-        font-size: 0.85rem !important;
-        width: 100% !important;
-        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3) !important;
-    }
-    
-    .stButton > button[kind="secondary"]:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
-    }
-    
-    /* Clear button styling */
-    .clear-button {
-        background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
-        border: none;
-        border-radius: 8px;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .clear-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
-    }
-    
-    /* Sidebar - only background styling, allow native Streamlit behavior with smooth transitions */
-    section[data-testid="stSidebar"] > div {
-        background: linear-gradient(180deg, var(--primary-bg) 0%, var(--secondary-bg) 100%) !important;
-        color: var(--text-primary) !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    
-    /* Enhanced sidebar animations */
-    section[data-testid="stSidebar"] {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    
-    /* Smooth animations for sidebar elements */
-    section[data-testid="stSidebar"] * {
-        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out !important;
-    }
-    
-    /* Enhanced hover effects for sidebar elements */
-    section[data-testid="stSidebar"] .stSelectbox:hover,
-    section[data-testid="stSidebar"] .stMultiSelect:hover,
-    section[data-testid="stSidebar"] .stButton:hover {
-        transform: translateX(2px);
-        transition: transform 0.2s ease-in-out;
-    }
-    
-    /* Smooth scroll for sidebar */
-    section[data-testid="stSidebar"] {
-        scroll-behavior: smooth !important;
-    }
-    
-    /* Fade in animation for sidebar content */
-    section[data-testid="stSidebar"] .element-container {
-        animation: fadeInLeft 0.5s ease-out !important;
-    }
-    
-    @keyframes fadeInLeft {
-        from { 
-            opacity: 0; 
-            transform: translateX(-20px); 
-        }
-        to { 
-            opacity: 1; 
-            transform: translateX(0); 
-        }
-    }
-    
-    /* Sidebar text handling with smooth animations */
-    .sidebar-content {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 0.85rem;
-        line-height: 1.2;
-        transition: all 0.2s ease-in-out;
-    }
-    
-    .sidebar-content:hover {
-        opacity: 0.8;
-        transform: scale(1.02);
-    }
-    
-    /* Multiselect and selectbox styling with smooth transitions */
-    .stSelectbox label, .stMultiSelect label {
-        font-size: 0.9rem !important;
-        font-weight: 600 !important;
-        color: var(--text-primary) !important;
-        white-space: nowrap !important;
-        transition: color 0.2s ease-in-out !important;
-    }
-    
-    .stSelectbox > div > div, .stMultiSelect > div > div {
-        min-width: 300px !important;
-        font-size: 0.85rem !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        border-radius: 8px !important;
-    }
-    
-    .stSelectbox > div > div:hover, .stMultiSelect > div > div:hover {
-        box-shadow: 0 4px 12px rgba(0, 212, 170, 0.2) !important;
-        transform: translateY(-1px) !important;
-    }
-    
-    /* Chart containers with animations */
-    .chart-container {
-        background: var(--gradient-1);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 10px 0;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        animation: fadeInUp 0.8s ease-out;
-        transition: all 0.3s ease;
-    }
-    
-    .chart-container:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
 def get_company_database():
     """Get comprehensive company database with categories"""
@@ -442,252 +97,29 @@ def get_company_database():
         ]
     }
 
-def generate_news_headline_and_link(company, news_type, sentiment):
-    """Generate realistic news headlines and links for companies"""
-    
-    # Company symbol mapping for more realistic URLs
-    company_symbols = {
-        'Apple': 'AAPL', 'Microsoft': 'MSFT', 'Google': 'GOOGL', 'Amazon': 'AMZN',
-        'Tesla': 'TSLA', 'Meta': 'META', 'Netflix': 'NFLX', 'IBM': 'IBM',
-        'JPMorgan Chase': 'JPM', 'Bank of America': 'BAC', 'Wells Fargo': 'WFC',
-        'Goldman Sachs': 'GS', 'Johnson & Johnson': 'JNJ', 'Pfizer': 'PFE',
-        'ExxonMobil': 'XOM', 'Chevron': 'CVX', 'Coca-Cola': 'KO', 'PepsiCo': 'PEP'
-    }
-    
-    symbol = company_symbols.get(company, company.replace(' ', '').upper()[:4])
-    
-    # News headline templates based on type and sentiment
-    headlines = {
-        'Earnings': {
-            'Positive': [
-                f"{company} Reports Strong Q3 Earnings, Beats Wall Street Expectations",
-                f"{company} Delivers Record Quarterly Revenue Growth",
-                f"{company} Exceeds Profit Forecasts in Latest Earnings Report"
-            ],
-            'Negative': [
-                f"{company} Misses Earnings Estimates, Stock Falls",
-                f"{company} Reports Disappointing Quarterly Results",
-                f"{company} Faces Revenue Decline in Latest Quarter"
-            ],
-            'Neutral': [
-                f"{company} Releases Q3 Financial Results",
-                f"{company} Reports Mixed Quarterly Performance",
-                f"{company} Announces Quarterly Earnings Update"
-            ]
-        },
-        'Product Launch': {
-            'Positive': [
-                f"{company} Unveils Revolutionary New Product Line",
-                f"{company} Launches Innovative Technology Solution",
-                f"{company} Introduces Game-Changing Product Innovation"
-            ],
-            'Negative': [
-                f"{company} Product Launch Faces Technical Issues",
-                f"{company} Delays Major Product Release",
-                f"{company} New Product Receives Mixed Market Response"
-            ],
-            'Neutral': [
-                f"{company} Announces New Product Development",
-                f"{company} Reveals Upcoming Product Portfolio",
-                f"{company} Updates Product Roadmap"
-            ]
-        },
-        'Market Analysis': {
-            'Positive': [
-                f"Analysts Upgrade {company} Stock Rating",
-                f"{company} Shows Strong Market Position",
-                f"Bullish Outlook for {company} Shares"
-            ],
-            'Negative': [
-                f"Market Concerns Over {company} Performance",
-                f"Analysts Downgrade {company} Stock",
-                f"{company} Faces Market Headwinds"
-            ],
-            'Neutral': [
-                f"Market Analysis: {company} Stock Review",
-                f"{company} Market Performance Update",
-                f"Investment Analysis: {company} Outlook"
-            ]
-        },
-        'Merger': {
-            'Positive': [
-                f"{company} Announces Strategic Merger Deal",
-                f"{company} Completes Major Acquisition",
-                f"{company} Merger Creates Market Leader"
-            ],
-            'Negative': [
-                f"{company} Merger Talks Fall Through",
-                f"{company} Acquisition Faces Regulatory Issues",
-                f"{company} Merger Delayed Due to Complications"
-            ],
-            'Neutral': [
-                f"{company} Explores Merger Opportunities",
-                f"{company} Merger Under Review",
-                f"{company} Announces Merger Discussions"
-            ]
-        }
-    }
-    
-    # Default headlines for other news types
-    default_headlines = {
-        'Positive': f"{company} Shows Strong Performance",
-        'Negative': f"{company} Faces Challenges",
-        'Neutral': f"{company} Business Update"
-    }
-    
-    # Select headline
-    if news_type in headlines:
-        headline = np.random.choice(headlines[news_type][sentiment])
-    else:
-        headline = default_headlines[sentiment]
-    
-    # Generate realistic news links
-    sources_urls = {
-        'Reuters': f"https://www.reuters.com/business/{symbol.lower()}-{news_type.lower()}-{datetime.now().strftime('%Y-%m-%d')}",
-        'Bloomberg': f"https://www.bloomberg.com/news/articles/{datetime.now().strftime('%Y-%m-%d')}/{symbol.lower()}-{news_type.lower()}",
-        'CNBC': f"https://www.cnbc.com/{datetime.now().strftime('%Y/%m/%d')}/{symbol.lower()}-{news_type.lower()}.html",
-        'Financial Times': f"https://www.ft.com/content/{symbol.lower()}-{news_type.lower()}-{datetime.now().strftime('%Y%m%d')}",
-        'Wall Street Journal': f"https://www.wsj.com/articles/{symbol.lower()}-{news_type.lower()}-{datetime.now().strftime('%Y%m%d')}"
-    }
-    
-    source = np.random.choice(list(sources_urls.keys()))
-    link = sources_urls[source]
-    
-    return headline, link
-
-def generate_sample_news_data(selected_companies=None):
-    """Generate sample financial news data for demonstration"""
-    company_db = get_company_database()
-    
-    # Define news types and sentiments
-    news_types = ['Earnings', 'Product Launch', 'Market Analysis', 'Merger', 'Partnership', 'Regulation', 
-                  'IPO', 'Acquisition', 'Dividend', 'Stock Split', 'Guidance Update', 'Leadership Change']
-    sentiments = ['Positive', 'Negative', 'Neutral']
-    
-    # If specific companies are selected, use ONLY them
-    if selected_companies and len(selected_companies) > 0:
-        # Set seed for reproducible results based on selected companies
-        seed_value = hash(tuple(sorted(selected_companies))) % 10000
-        np.random.seed(seed_value)
-        
-        target_companies = selected_companies
-        # Generate guaranteed news for each selected company
-        news_per_company = 8
-        
-        data = []
-        
-        # Ensure each selected company gets exactly the specified amount of news
-        for company in target_companies:
-            for i in range(news_per_company):
-                date = datetime.now() - timedelta(days=np.random.randint(0, 30))
-                news_type = np.random.choice(news_types)
-                sentiment = np.random.choice(sentiments)
-                
-                # Generate sentiment score based on sentiment
-                if sentiment == 'Positive':
-                    score = np.random.uniform(0.5, 1.0)
-                elif sentiment == 'Negative':
-                    score = np.random.uniform(-1.0, -0.5)
-                else:
-                    score = np.random.uniform(-0.2, 0.2)
-                
-                # Generate realistic news headlines and links
-                news_headline, news_link = generate_news_headline_and_link(company, news_type, sentiment)
-                
-                data.append({
-                    'Date': date.strftime('%Y-%m-%d'),
-                    'Company': company,  # Exact company name from selection
-                    'News_Type': news_type,
-                    'Sentiment': sentiment,
-                    'Sentiment_Score': score,
-                    'Impact_Score': np.random.uniform(0.1, 1.0),
-                    'Source': np.random.choice(['Reuters', 'Bloomberg', 'CNBC', 'Financial Times', 'Wall Street Journal']),
-                    'Headline': news_headline,
-                    'News_Link': news_link
-                })
-        
-        # Reset seed
-        np.random.seed(None)
-    else:
-        # If no specific selection, use all companies
-        all_companies = []
-        for category, companies in company_db.items():
-            all_companies.extend(companies)
-        target_companies = all_companies[:50]  # Limit for performance
-        news_count = 100
-        
-        data = []
-        for i in range(news_count):
-            date = datetime.now() - timedelta(days=np.random.randint(0, 30))
-            company = np.random.choice(target_companies)
-            news_type = np.random.choice(news_types)
-            sentiment = np.random.choice(sentiments)
-            
-            # Generate sentiment score based on sentiment
-            if sentiment == 'Positive':
-                score = np.random.uniform(0.5, 1.0)
-            elif sentiment == 'Negative':
-                score = np.random.uniform(-1.0, -0.5)
-            else:
-                score = np.random.uniform(-0.2, 0.2)
-            
-            # Generate realistic news headlines and links
-            news_headline, news_link = generate_news_headline_and_link(company, news_type, sentiment)
-            
-            data.append({
-                'Date': date.strftime('%Y-%m-%d'),
-                'Company': company,
-                'News_Type': news_type,
-                'Sentiment': sentiment,
-                'Sentiment_Score': score,
-                'Impact_Score': np.random.uniform(0.1, 1.0),
-                'Source': np.random.choice(['Reuters', 'Bloomberg', 'CNBC', 'Financial Times', 'Wall Street Journal']),
-                'Headline': news_headline,
-                'News_Link': news_link
-            })
-    
-    return pd.DataFrame(data)
-
-
-def categorize_news(title: str) -> str:
-    """Assign a transparent keyword category to a provider headline."""
-    normalized = title.lower()
-    if any(word in normalized for word in ('earnings', 'revenue', 'guidance', 'quarter')):
-        return 'Earnings'
-    if any(word in normalized for word in ('acquire', 'acquisition', 'merger', 'takeover')):
-        return 'Merger & Acquisition'
-    if any(word in normalized for word in ('ceo', 'cfo', 'executive', 'appoints')):
-        return 'Leadership Change'
-    if any(word in normalized for word in ('regulator', 'sec ', 'lawsuit', 'antitrust')):
-        return 'Regulatory Update'
-    return 'Market Analysis'
-
-
 @st.cache_data(ttl=300, show_spinner=False)
 def load_live_news(companies):
-    """Fetch provider articles and derive sentiment from their actual text."""
-    analyzer = FinancialSentimentAnalyzer()
+    """Adapt application results to the tabular representation used by this view."""
     rows = []
-    seen_links = set()
-    for company in companies:
-        for article in YahooFinanceService.search_news(company):
-            score = analyzer.analyze_text(f"{article['title']} {article['summary']}").score
-            sentiment = 'Positive' if score > 0.2 else 'Negative' if score < -0.2 else 'Neutral'
-            if not article['link'] or article['link'] in seen_links:
-                continue
-            seen_links.add(article['link'])
-            rows.append({
-                'Date': article['published_at'].date().isoformat(),
-                'Company': article['company'],
-                'News_Type': categorize_news(article['title']),
-                'Sentiment': sentiment,
-                'Sentiment_Score': round(score, 3),
-                'Impact_Score': round(min(abs(score), 1.0), 3),
-                'Source': article['source'],
-                'Headline': article['title'],
-                'News_Link': article['link'],
-                'Data_Source': article['data_source'],
-            })
+    analyses = get_application_services().analyze_financial_news.execute(companies)
+    for analysis in analyses:
+        article = analysis.article
+        if not article.url:
+            continue
+        score = analysis.sentiment.score
+        sentiment = 'Positive' if score > 0.2 else 'Negative' if score < -0.2 else 'Neutral'
+        rows.append({
+            'Date': article.published_at.date().isoformat(),
+            'Company': article.company,
+            'News_Type': analysis.category.value,
+            'Sentiment': sentiment,
+            'Sentiment_Score': round(score, 3),
+            'Impact_Score': round(analysis.impact_score, 3),
+            'Source': article.source,
+            'Headline': article.title,
+            'News_Link': article.url,
+            'Data_Source': 'Yahoo Finance via yfinance',
+        })
     return pd.DataFrame(rows)
 
 def create_sentiment_chart(df):
@@ -698,7 +130,7 @@ def create_sentiment_chart(df):
         go.Bar(
             x=sentiment_counts.index,
             y=sentiment_counts.values,
-            marker_color=['#00D4AA', '#FF6B6B', '#4ECDC4'],
+            marker_color=['#7B9669', '#404E3B', '#6C8480'],
             text=sentiment_counts.values,
             textposition='auto',
         )
@@ -728,9 +160,9 @@ def create_timeline_chart(df):
         color='Sentiment',
         title="Sentiment Timeline",
         color_discrete_map={
-            'Positive': '#00D4AA',
-            'Negative': '#FF6B6B',
-            'Neutral': '#4ECDC4'
+            'Positive': '#7B9669',
+            'Negative': '#404E3B',
+            'Neutral': '#6C8480'
         }
     )
     
@@ -751,7 +183,7 @@ def create_company_sentiment_chart(df):
     
     for sentiment in ['Positive', 'Negative', 'Neutral']:
         if sentiment in company_sentiment.columns:
-            color = {'Positive': '#00D4AA', 'Negative': '#FF6B6B', 'Neutral': '#4ECDC4'}[sentiment]
+            color = {'Positive': '#7B9669', 'Negative': '#404E3B', 'Neutral': '#6C8480'}[sentiment]
             fig.add_trace(go.Bar(
                 name=sentiment,
                 x=company_sentiment.index,
@@ -774,7 +206,6 @@ def create_company_sentiment_chart(df):
 
 def main():
     """Main function for Financial Analysis page"""
-    load_custom_css()
     apply_design_system()
     render_app_shell("analysis")
 
@@ -1127,7 +558,7 @@ def main():
             try:
                 with st.spinner("Loading linked financial news..."):
                     df = load_live_news(requested_companies)
-            except LiveDataUnavailable as exc:
+            except DataProviderUnavailable as exc:
                 st.error(f"Live news is currently unavailable: {exc}")
                 return
             if len(selected_companies) > len(requested_companies):

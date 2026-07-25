@@ -31,10 +31,12 @@ First off, thank you for considering contributing to Financial News Analyzer! �
 ## 📋 Development Guidelines
 
 ### 🏗️ Architecture Principles
-- Follow Clean Architecture patterns
-- Implement SOLID principles
-- Use dependency injection
-- Maintain separation of concerns
+- Keep domain rules independent from Streamlit, pandas, and external providers
+- Put orchestration in application use cases and define their provider contracts as ports
+- Keep Yahoo Finance and other external integrations in infrastructure adapters
+- Let Streamlit pages call use cases instead of infrastructure services directly
+- Add modules only when they have a live caller or test
+- Avoid simulated market/news data in production workflows
 
 ### 🎨 Code Style
 - Follow PEP 8 guidelines
@@ -46,7 +48,7 @@ First off, thank you for considering contributing to Financial News Analyzer! �
 - Write unit tests for new features
 - Maintain test coverage above 80%
 - Test edge cases and error conditions
-- Use pytest framework
+- Use the built-in `unittest` suite
 
 ### 📚 Documentation
 - Update README for new features

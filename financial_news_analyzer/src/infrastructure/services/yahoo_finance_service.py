@@ -1,23 +1,29 @@
-"""Yahoo Finance-backed market and news retrieval.
+"""Yahoo Finance implementation of the application's outbound data ports."""
 
-The service exposes data provenance and never invents a value when the live
-provider is unavailable. Yahoo Finance data is suitable for development and
-personal-use research; production use needs a separately licensed provider.
-"""
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any
 
 import pandas as pd
 
+from ...application.exceptions import DataProviderUnavailable
+from ...domain.entities.financial_news import FinancialNews
+from ...domain.entities.market_data import MarketInstrument, MarketQuote, PriceBar
 
-class LiveDataUnavailable(RuntimeError):
-    """Raised when the configured live provider cannot return usable data."""
+
+# Kept as a public alias so callers of earlier versions can migrate safely.
+LiveDataUnavailable = DataProviderUnavailable
 
 
 class YahooFinanceService:
-    """Read market prices, history, and linked news from Yahoo Finance."""
+    """Translate yfinance responses into provider-neutral domain models.
+
+    This adapter is the only application module that knows about pandas and
+    yfinance's response shapes.  It deliberately does not return DataFrames or
+    provider dictionaries beyond the infrastructure boundary.
+    """
 
     source_name = "Yahoo Finance via yfinance"
     source_url = "https://finance.yahoo.com/"
@@ -27,7 +33,7 @@ class YahooFinanceService:
         try:
             import yfinance as yf
         except ImportError as exc:
-            raise LiveDataUnavailable(
+            raise DataProviderUnavailable(
                 "The live-data dependency is missing. Install requirements.txt first."
             ) from exc
         return yf
@@ -38,17 +44,21 @@ class YahooFinanceService:
             return None
         return float(value)
 
-    @classmethod
-    def get_market_snapshot(
-        cls, instruments: Iterable[tuple[str, str, str]]
-    ) -> pd.DataFrame:
-        """Return a normalized snapshot for ``(symbol, name, category)`` rows."""
-        items = list(instruments)
-        if not items:
-            return pd.DataFrame()
+    @staticmethod
+    def _as_datetime(value: Any) -> datetime:
+        timestamp = pd.Timestamp(value)
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.tz_localize(timezone.utc)
+        return timestamp.to_pydatetime()
 
-        yf = cls._client()
-        symbols = [symbol for symbol, _, _ in items]
+    def get_market_snapshot(self, instruments: Sequence[MarketInstrument]) -> tuple[MarketQuote, ...]:
+        """Return normalized latest quotes for the requested instruments."""
+        requested_instruments = tuple(instruments)
+        if not requested_instruments:
+            return ()
+
+        yf = self._client()
+        symbols = [instrument.symbol for instrument in requested_instruments]
         try:
             history = yf.download(
                 tickers=symbols,
@@ -60,68 +70,88 @@ class YahooFinanceService:
                 group_by="ticker",
             )
         except Exception as exc:
-            raise LiveDataUnavailable("Live market data could not be retrieved.") from exc
+            raise DataProviderUnavailable("Live market data could not be retrieved.") from exc
         if history is None or history.empty:
-            raise LiveDataUnavailable("The provider returned no market data.")
+            raise DataProviderUnavailable("The provider returned no market data.")
 
-        rows: list[dict[str, Any]] = []
-        for symbol, company, category in items:
+        quotes: list[MarketQuote] = []
+        for instrument in requested_instruments:
             try:
-                frame = history[symbol] if isinstance(history.columns, pd.MultiIndex) else history
+                frame = history[instrument.symbol] if isinstance(history.columns, pd.MultiIndex) else history
                 frame = frame.dropna(subset=["Close"])
                 if frame.empty:
                     continue
                 latest = frame.iloc[-1]
-                previous_close = cls._as_float(frame.iloc[-2]["Close"]) if len(frame) > 1 else None
-                price = cls._as_float(latest["Close"])
+                price = self._as_float(latest["Close"])
                 if price is None:
                     continue
-                change = price - previous_close if previous_close is not None else 0.0
-                change_pct = (change / previous_close * 100) if previous_close else 0.0
-                rows.append({
-                    "Symbol": symbol, "Company": company, "Category": category,
-                    "Price": round(price, 2), "Change": round(change, 2),
-                    "Change_Pct": round(change_pct, 2), "Market_Cap": None,
-                    "Volume": int(latest["Volume"]) if not pd.isna(latest["Volume"]) else None,
-                    "Day_High": cls._as_float(latest["High"]),
-                    "Day_Low": cls._as_float(latest["Low"]), "High_52w": None,
-                    "Low_52w": None, "PE_Ratio": None, "Dividend_Yield": None,
-                    "Last_Updated": frame.index[-1], "Data_Source": cls.source_name,
-                })
-            except (KeyError, IndexError, TypeError):
+                previous_close = self._as_float(frame.iloc[-2]["Close"]) if len(frame) > 1 else None
+                raw_volume = latest.get("Volume")
+                quotes.append(
+                    MarketQuote(
+                        instrument=instrument,
+                        price=price,
+                        previous_close=previous_close,
+                        volume=None if raw_volume is None or pd.isna(raw_volume) else int(raw_volume),
+                        day_high=self._as_float(latest.get("High")),
+                        day_low=self._as_float(latest.get("Low")),
+                        observed_at=self._as_datetime(frame.index[-1]),
+                        provider=self.source_name,
+                    )
+                )
+            except (KeyError, IndexError, TypeError, ValueError):
                 continue
-        if not rows:
-            raise LiveDataUnavailable("The provider returned no usable market rows.")
-        return pd.DataFrame(rows)
+        if not quotes:
+            raise DataProviderUnavailable("The provider returned no usable market rows.")
+        return tuple(quotes)
 
-    @classmethod
-    def get_history(cls, symbol: str, days: int) -> pd.DataFrame:
-        """Return actual OHLCV history for one symbol."""
-        yf = cls._client()
+    def get_history(self, symbol: str, days: int) -> tuple[PriceBar, ...]:
+        """Return actual daily OHLCV bars for one symbol."""
+        yf = self._client()
         try:
             frame = yf.Ticker(symbol).history(
                 period=f"{max(days, 5)}d", interval="1d", auto_adjust=False
             )
         except Exception as exc:
-            raise LiveDataUnavailable(f"History for {symbol} could not be retrieved.") from exc
+            raise DataProviderUnavailable(f"History for {symbol} could not be retrieved.") from exc
         if frame is None or frame.empty:
-            raise LiveDataUnavailable(f"No history is available for {symbol}.")
-        frame = frame.reset_index()
-        date_column = "Date" if "Date" in frame.columns else "Datetime"
-        frame = frame.rename(columns={date_column: "Date"})
-        required = ["Date", "Open", "High", "Low", "Close", "Volume"]
-        return frame[[column for column in required if column in frame.columns]].copy()
+            raise DataProviderUnavailable(f"No history is available for {symbol}.")
 
-    @classmethod
-    def search_news(cls, company: str, limit: int = 12) -> list[dict[str, Any]]:
-        """Return provider news for a company search, without invented URLs."""
-        yf = cls._client()
+        bars: list[PriceBar] = []
+        for observed_at, row in frame.iterrows():
+            try:
+                open_price = self._as_float(row["Open"])
+                high_price = self._as_float(row["High"])
+                low_price = self._as_float(row["Low"])
+                close_price = self._as_float(row["Close"])
+                if None in (open_price, high_price, low_price, close_price):
+                    continue
+                raw_volume = row.get("Volume")
+                bars.append(
+                    PriceBar(
+                        observed_at=self._as_datetime(observed_at),
+                        open_price=open_price,
+                        high_price=high_price,
+                        low_price=low_price,
+                        close_price=close_price,
+                        volume=None if raw_volume is None or pd.isna(raw_volume) else int(raw_volume),
+                    )
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
+        if not bars:
+            raise DataProviderUnavailable(f"No usable history is available for {symbol}.")
+        return tuple(bars)
+
+    def search_news(self, company: str, limit: int = 12) -> tuple[FinancialNews, ...]:
+        """Return provider articles without fabricating missing metadata or links."""
+        yf = self._client()
         try:
             results = yf.Search(company, news_count=limit).news or []
         except Exception as exc:
-            raise LiveDataUnavailable(f"News for {company} could not be retrieved.") from exc
+            raise DataProviderUnavailable(f"News for {company} could not be retrieved.") from exc
 
-        articles: list[dict[str, Any]] = []
+        articles: list[FinancialNews] = []
         for index, item in enumerate(results):
             if not isinstance(item, dict):
                 continue
@@ -134,19 +164,28 @@ class YahooFinanceService:
             provider = content.get("provider", {})
             provider_name = provider.get("displayName") if isinstance(provider, dict) else provider
             canonical_url = content.get("canonicalUrl", {})
-            link = canonical_url.get("url") if isinstance(canonical_url, dict) else canonical_url
+            url = canonical_url.get("url") if isinstance(canonical_url, dict) else canonical_url
             click_through = content.get("clickThroughUrl", {})
-            link = link or (click_through.get("url") if isinstance(click_through, dict) else None) or item.get("link")
+            url = url or (click_through.get("url") if isinstance(click_through, dict) else None) or item.get("link")
             published = content.get("pubDate") or item.get("providerPublishTime")
-            if isinstance(published, (int, float)):
-                published_at = datetime.fromtimestamp(published, tz=timezone.utc)
-            else:
-                parsed = pd.to_datetime(published, utc=True, errors="coerce")
-                published_at = parsed.to_pydatetime() if not pd.isna(parsed) else datetime.now(timezone.utc)
-            articles.append({
-                "id": str(content.get("id") or item.get("uuid") or f"{company}-{index}-{title}"),
-                "title": title, "summary": content.get("summary") or item.get("summary") or title,
-                "source": provider_name or cls.source_name, "published_at": published_at,
-                "link": link, "company": company, "data_source": cls.source_name,
-            })
-        return articles
+            articles.append(
+                FinancialNews(
+                    id=str(content.get("id") or item.get("uuid") or f"{company}-{index}-{title}"),
+                    title=str(title),
+                    summary=str(content.get("summary") or item.get("summary") or title),
+                    source=str(provider_name or self.source_name),
+                    published_at=self._parse_published_at(published),
+                    url=str(url) if url else None,
+                    company=company,
+                )
+            )
+        return tuple(articles)
+
+    @staticmethod
+    def _parse_published_at(value: Any) -> datetime:
+        if isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value, tz=timezone.utc)
+        parsed = pd.to_datetime(value, utc=True, errors="coerce")
+        if not pd.isna(parsed):
+            return parsed.to_pydatetime()
+        return datetime.now(timezone.utc)

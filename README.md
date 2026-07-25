@@ -36,7 +36,7 @@ Financial News Analyzer is a research-oriented Streamlit application combining l
 - **📊 Latest Daily Data**: Provider-backed OHLCV charts with five-minute caching
 - **🌍 Market Schedules**: Weekday schedule display across global timezones
 - **📱 Responsive Design**: Modern UI with professional animations and dark theme
-- **🏗️ Clean Architecture**: SOLID principles with layered design pattern
+- **🧩 Focused codebase**: Only the modules used by the Streamlit workspaces are retained
 - **⚡ Cached Retrieval**: Short-lived provider response caching to reduce rate limiting
 - **✉️ Contact Page**: Direct email contact details and FAQs
 
@@ -52,7 +52,7 @@ Financial News Analyzer is a research-oriented Streamlit application combining l
 - **Interactive Charts**: Candlestick, line, and area charts with zoom functionality
 - **Technical Indicators**: Price and volume visualizations from daily OHLCV history
 - **Market Overview**: Latest available provider prices for the supported symbol universe
-- **Correlation Analysis**: Inter-market and cross-asset correlation matrices
+- **Category Performance**: Compare live provider returns across the supported categories
 
 ### 🌍 Global Market Coverage
 - **Multi-timezone Support**: Weekday schedules across different exchange time zones
@@ -107,9 +107,7 @@ Financial News Analyzer is a research-oriented Streamlit application combining l
 streamlit>=1.28.0
 pandas>=1.5.0
 plotly>=5.15.0
-numpy>=1.24.0
 pytz>=2023.3
-python-dateutil>=2.8.2
 yfinance>=0.2.54,<1.0
 ```
 
@@ -131,15 +129,17 @@ yfinance>=0.2.54,<1.0
 
 ## 🏗️ Architecture
 
-The Financial News Analyzer follows **Clean Architecture** principles with a well-organized structure:
+The application follows Onion Architecture: dependencies point inward, while the
+composition root wires the outer adapters together.
 
 ```
 financial_news_analyzer/
 ├── 📁 src/
-│   ├── 📁 application/          # Application business logic
-│   ├── 📁 domain/               # Core domain entities
-│   ├── 📁 infrastructure/       # External integrations
-│   └── 📁 presentation/         # UI components
+│   ├── 📁 domain/               # Sentiment scoring and market schedule value objects
+│   ├── 📁 application/          # Use cases and provider/repository port contracts
+│   ├── 📁 infrastructure/       # Yahoo Finance and static-schedule adapters
+│   ├── 📁 presentation/         # Shared design, navigation, and market-clock UI
+│   └── bootstrap.py             # Composition root
 ├── 📁 pages/                    # Streamlit pages
 │   ├── 1_Financial_Analysis.py  # News sentiment analysis
 │   ├── 2_Market_Data.py         # Market data visualization
@@ -151,11 +151,11 @@ financial_news_analyzer/
 
 ### 🎨 Design Principles
 
-- **SOLID Principles**: Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, Dependency Inversion
-- **Clean Architecture**: Domain-driven design with clear separation of concerns
-- **Dependency Injection**: Loose coupling through dependency injection container
-- **Use Case Pattern**: Business logic encapsulated in specific use cases
-- **Repository Pattern**: Data access abstraction for external services
+- Keep domain models and rules free from Streamlit, pandas, yfinance, and provider details.
+- Depend on application-owned ports; implement those ports only in infrastructure adapters.
+- Let Streamlit pages call use cases and adapt their results for charts and tables.
+- Prefer live provider data; do not fall back to simulated news or market prices.
+- Keep the keyword sentiment baseline inspectable and easy to change.
 
 ## 🎮 Usage
 

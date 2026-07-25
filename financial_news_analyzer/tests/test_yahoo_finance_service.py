@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
+from financial_news_analyzer.src.domain.entities.market_data import MarketInstrument
 from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service import YahooFinanceService
 
 
@@ -52,22 +53,30 @@ class YahooFinanceServiceTests(unittest.TestCase):
         self.client_patch = patch.object(YahooFinanceService, "_client", return_value=_FakeYFinance())
         self.client_patch.start()
         self.addCleanup(self.client_patch.stop)
+        self.service = YahooFinanceService()
 
-    def test_snapshot_normalizes_provider_prices(self):
-        snapshot = YahooFinanceService.get_market_snapshot([("AAPL", "Apple", "Technology")])
+    def test_snapshot_translates_provider_prices_to_domain_quotes(self):
+        quotes = self.service.get_market_snapshot([MarketInstrument("AAPL", "Apple", "Technology")])
+        quote = quotes[0]
 
-        self.assertEqual(snapshot.iloc[0]["Symbol"], "AAPL")
-        self.assertEqual(snapshot.iloc[0]["Price"], 104.0)
-        self.assertAlmostEqual(snapshot.iloc[0]["Change_Pct"], 2.97, places=2)
-        self.assertEqual(snapshot.iloc[0]["Data_Source"], YahooFinanceService.source_name)
+        self.assertEqual(quote.instrument.symbol, "AAPL")
+        self.assertEqual(quote.price, 104.0)
+        self.assertAlmostEqual(quote.change_percent, 2.97, places=2)
+        self.assertEqual(quote.provider, YahooFinanceService.source_name)
 
-    def test_news_keeps_the_provider_link_and_metadata(self):
-        article = YahooFinanceService.search_news("Apple", limit=5)[0]
+    def test_news_translates_provider_metadata_to_domain_article(self):
+        article = self.service.search_news("Apple", limit=5)[0]
 
-        self.assertEqual(article["company"], "Apple")
-        self.assertEqual(article["source"], "Example News")
-        self.assertEqual(article["link"], "https://example.test/article-1")
-        self.assertEqual(article["data_source"], YahooFinanceService.source_name)
+        self.assertEqual(article.company, "Apple")
+        self.assertEqual(article.source, "Example News")
+        self.assertEqual(article.url, "https://example.test/article-1")
+
+    def test_history_translates_ohlcv_rows_to_price_bars(self):
+        bars = self.service.get_history("AAPL", days=5)
+
+        self.assertEqual(len(bars), 1)
+        self.assertEqual(bars[0].close_price, 101.0)
+        self.assertEqual(bars[0].volume, 1_000)
 
 
 if __name__ == "__main__":
