@@ -101,32 +101,13 @@ Financial News Analyzer is a research-oriented Streamlit application combining l
    - Open your browser and navigate to `http://localhost:8501`
    - Enjoy the comprehensive financial analysis experience!
 
-### NiceGUI application
-
-NiceGUI is a standalone web server and cannot be hosted on Streamlit Community
-Cloud. To run the new interface locally from the `financial_news_analyzer`
-directory:
-
-```bash
-python nicegui_app.py
-```
-
-Then open `http://localhost:8080`. For deployment, build and run the included
-Docker image on a container host (for example Render, Railway, Fly.io, or a
-private server):
-
-```bash
-docker build -t financial-news-analyzer .
-docker run --rm -p 8080:8080 financial-news-analyzer
-```
-
-Both interfaces use the same Yahoo Finance service and support validation logic.
+The application uses a native Streamlit interface with a custom React
+navigation component. Open `http://localhost:8501` after starting the app.
 
 ## 📋 Requirements
 
 ```
 streamlit>=1.28.0
-nicegui>=2.0,<3.0
 pandas>=1.5.0
 plotly>=5.15.0
 pytz>=2023.3

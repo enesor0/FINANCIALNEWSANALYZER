@@ -16,10 +16,10 @@ interface NavItem {
 }
 
 const NAVIGATION: NavItem[] = [
-  { key: "home", label: "Overview", icon: "◌" },
-  { key: "analysis", label: "Research", icon: "✦" },
-  { key: "market", label: "Markets", icon: "↗" },
-  { key: "support", label: "Support", icon: "?" },
+  { key: "home", label: "Genel Bakış", icon: "◌" },
+  { key: "analysis", label: "Haberler", icon: "✦" },
+  { key: "market", label: "Piyasalar", icon: "↗" },
+  { key: "support", label: "Destek", icon: "?" },
 ];
 
 function App({ args }: ComponentProps) {
@@ -27,7 +27,7 @@ function App({ args }: ComponentProps) {
   const [hovered, setHovered] = useState<PageKey | null>(null);
 
   useEffect(() => {
-    Streamlit.setFrameHeight(86);
+    Streamlit.setFrameHeight(82);
   }, []);
 
   const activeIndex = useMemo(
@@ -44,8 +44,8 @@ function App({ args }: ComponentProps) {
           <i /><i /><i />
         </span>
         <div className="brand-copy">
-          <span className="brand-name">Financial News</span>
-          <span className="brand-subtitle">Intelligence desk</span>
+          <span className="brand-name">Financial News Analyzer</span>
+          <span className="brand-subtitle">Araştırma çalışma alanı</span>
         </div>
       </a>
 
@@ -83,8 +83,8 @@ function App({ args }: ComponentProps) {
           <span className="status-pulse-ring" />
         </span>
         <div className="live-status-copy">
-          <strong>Provider live</strong>
-          <small>Research workspace</small>
+          <strong>Canlı veri</strong>
+          <small>Yahoo Finance sağlayıcısı</small>
         </div>
       </div>
     </header>

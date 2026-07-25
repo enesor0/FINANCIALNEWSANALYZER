@@ -1,7 +1,0 @@
-.git
-.github
-.pytest_cache
-**/__pycache__
-**/*.pyc
-**/node_modules
-financial_news_analyzer/src/presentation/frontend/dist
