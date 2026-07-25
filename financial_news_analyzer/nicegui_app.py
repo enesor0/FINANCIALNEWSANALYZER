@@ -611,7 +611,8 @@ def support_page() -> None:
     footer()
 
 
-if __name__ in {"__main__", "__mp_main__"}:
+def run_app() -> None:
+    """Launch the default NiceGUI presentation layer."""
     ui.run(
         title="Financial News Analyzer",
         favicon="📈",
@@ -620,3 +621,7 @@ if __name__ in {"__main__", "__mp_main__"}:
         reload=False,
         show=False,
     )
+
+
+if __name__ in {"__main__", "__mp_main__"}:
+    run_app()

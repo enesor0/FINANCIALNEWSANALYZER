@@ -94,30 +94,30 @@ Financial News Analyzer is a research-oriented Streamlit application combining l
 
 4. **Launch the application**
    ```bash
-   streamlit run Start.py
+   python Start.py
    ```
 
 5. **Access the platform**
-   - Open your browser and navigate to `http://localhost:8501`
+   - Open your browser and navigate to `http://localhost:8080`
    - Enjoy the comprehensive financial analysis experience!
 
-### NiceGUI preview
+### Streamlit fallback
 
-The Streamlit version remains the default application. To try the new NiceGUI
-interface without changing or removing it, run this from the
-`financial_news_analyzer` directory:
+NiceGUI is the default application. The previous Streamlit implementation is
+still available as a fallback from the `financial_news_analyzer` directory:
 
 ```bash
-python nicegui_app.py
+streamlit run streamlit_app.py
 ```
 
-Then open `http://localhost:8080`. The NiceGUI application uses the same Yahoo
-Finance service and support validation logic as the Streamlit version.
+Then open `http://localhost:8501`. Both interfaces use the same Yahoo Finance
+service and support validation logic.
 
 ## 📋 Requirements
 
 ```
 streamlit>=1.28.0
+nicegui>=2.0,<3.0
 pandas>=1.5.0
 plotly>=5.15.0
 pytz>=2023.3

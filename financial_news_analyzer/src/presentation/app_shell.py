@@ -11,7 +11,7 @@ _FRONTEND_DIR: Final = Path(__file__).with_name("frontend") / "dist"
 _shell_component = components.declare_component("financial_app_shell", path=str(_FRONTEND_DIR))
 
 _PAGES: Final = {
-    "home": "Start.py",
+    "home": "streamlit_app.py",
     "analysis": "pages/1_Financial_Analysis.py",
     "market": "pages/2_Market_Data.py",
     "support": "pages/3_Contact_Us.py",
