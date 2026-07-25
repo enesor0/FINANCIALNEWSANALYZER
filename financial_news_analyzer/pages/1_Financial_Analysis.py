@@ -9,6 +9,19 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
+import sys
+from html import escape
+from pathlib import Path
+
+repository_root = Path(__file__).resolve().parents[2]
+if str(repository_root) not in sys.path:
+    sys.path.insert(0, str(repository_root))
+
+from financial_news_analyzer.src.domain.services.sentiment_analysis_service import FinancialSentimentAnalyzer
+from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service import (
+    LiveDataUnavailable,
+    YahooFinanceService,
+)
 
 # Page configuration
 st.set_page_config(
@@ -628,6 +641,46 @@ def generate_sample_news_data(selected_companies=None):
     
     return pd.DataFrame(data)
 
+
+def categorize_news(title: str) -> str:
+    """Assign a transparent keyword category to a provider headline."""
+    normalized = title.lower()
+    if any(word in normalized for word in ('earnings', 'revenue', 'guidance', 'quarter')):
+        return 'Earnings'
+    if any(word in normalized for word in ('acquire', 'merger', 'deal', 'takeover')):
+        return 'Merger & Acquisition'
+    if any(word in normalized for word in ('ceo', 'cfo', 'executive', 'appoints')):
+        return 'Leadership Change'
+    if any(word in normalized for word in ('regulator', 'sec ', 'lawsuit', 'antitrust')):
+        return 'Regulatory Update'
+    return 'Market Analysis'
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_live_news(companies):
+    """Fetch provider articles and derive sentiment from their actual text."""
+    analyzer = FinancialSentimentAnalyzer()
+    rows = []
+    for company in companies:
+        for article in YahooFinanceService.search_news(company):
+            score = analyzer.analyze_text(f"{article['title']} {article['summary']}").score
+            sentiment = 'Positive' if score > 0.2 else 'Negative' if score < -0.2 else 'Neutral'
+            if not article['link']:
+                continue
+            rows.append({
+                'Date': article['published_at'].date().isoformat(),
+                'Company': article['company'],
+                'News_Type': categorize_news(article['title']),
+                'Sentiment': sentiment,
+                'Sentiment_Score': round(score, 3),
+                'Impact_Score': round(min(abs(score), 1.0), 3),
+                'Source': article['source'],
+                'Headline': article['title'],
+                'News_Link': article['link'],
+                'Data_Source': article['data_source'],
+            })
+    return pd.DataFrame(rows)
+
 def create_sentiment_chart(df):
     """Create sentiment analysis chart"""
     sentiment_counts = df['Sentiment'].value_counts()
@@ -713,6 +766,11 @@ def create_company_sentiment_chart(df):
 def main():
     """Main function for Financial Analysis page"""
     load_custom_css()
+
+    if st.sidebar.button("↻ Refresh live news", use_container_width=True):
+        load_live_news.clear()
+        st.session_state.pop('cached_df', None)
+        st.rerun()
     
     # Header - matching Start.py design
     st.markdown("""
@@ -728,6 +786,11 @@ def main():
         </h3>
     </div>
     """, unsafe_allow_html=True)
+
+    st.caption(
+        "News source: Yahoo Finance via yfinance. Sentiment is a transparent keyword baseline, "
+        "not investment advice."
+    )
     
     # Quick tips for new users
     if not st.session_state.get('tips_dismissed', False):
@@ -855,9 +918,6 @@ def main():
     available_companies = []
     for category in selected_categories:
         available_companies.extend(company_db[category])
-    
-    # Generate initial sample data to get available companies
-    initial_df = generate_sample_news_data()
     
     # Date range filter
     date_range = st.sidebar.date_input(
@@ -1036,21 +1096,30 @@ def main():
         st.sidebar.warning("⚠️ No companies selected")
         st.sidebar.info("💡 Use search box or browse categories to select companies")
     
-    # Generate targeted news data based on selected companies
-    # Use session state to ensure fresh data generation
+    # Retrieve linked provider news only for user-selected companies. A failed
+    # request is shown as a failed request; no simulated article is substituted.
     if 'last_selected_companies' not in st.session_state:
         st.session_state.last_selected_companies = []
     
     # Only regenerate if companies changed or no cache exists
-    if (selected_companies != st.session_state.last_selected_companies or 
-        'cached_df' not in st.session_state):
+    if (selected_companies != st.session_state.last_selected_companies or
+        'cached_df' not in st.session_state or
+        ('Data_Source' not in st.session_state.cached_df.columns if 'cached_df' in st.session_state else False)):
         
-        # Clear old cache completely
         if 'cached_df' in st.session_state:
             del st.session_state.cached_df
-            
-        # Generate new data for selected companies ONLY
-        df = generate_sample_news_data(selected_companies)
+        if not selected_companies:
+            df = pd.DataFrame()
+        else:
+            requested_companies = tuple(selected_companies[:6])
+            try:
+                with st.spinner("Loading linked financial news..."):
+                    df = load_live_news(requested_companies)
+            except LiveDataUnavailable as exc:
+                st.error(f"Live news is currently unavailable: {exc}")
+                return
+            if len(selected_companies) > len(requested_companies):
+                st.info("To protect the live provider, this refresh analyzes the first 6 selected companies.")
         st.session_state.last_selected_companies = selected_companies.copy() if selected_companies else []
         st.session_state.cached_df = df
         
@@ -1061,19 +1130,27 @@ def main():
             del st.session_state.selected_sentiments
     else:
         df = st.session_state.cached_df
+
+    if not selected_companies:
+        st.info("👆 Select one or more companies from the sidebar to load linked news articles.")
+        return
     
-    # Debug: Show what data was actually generated
+    if df.empty and selected_companies:
+        st.warning("No linked news articles were returned for the selected companies. Try another company or refresh later.")
+        return
+
+    # Show provider coverage for the active selection.
     if selected_companies:
         st.sidebar.markdown("### 📊 Data Summary")
         generated_companies = list(df['Company'].unique())
-        st.sidebar.markdown(f"**Data Generated for:** {len(generated_companies)} companies")
+        st.sidebar.markdown(f"**Articles returned for:** {len(generated_companies)} companies")
         
         # Show exact matching
         st.sidebar.markdown("### ✅ Company Matching Check")
         for selected in selected_companies:
             if selected in generated_companies:
                 count = len(df[df['Company'] == selected])
-                st.sidebar.markdown(f"✅ **{selected}**: {count} news articles")
+                st.sidebar.markdown(f"✅ **{selected}**: {count} source articles")
             else:
                 st.sidebar.markdown(f"❌ **{selected}**: NO DATA FOUND!")
         
@@ -1085,8 +1162,8 @@ def main():
                 count = len(df[df['Company'] == comp])
                 st.sidebar.markdown(f"❓ **{comp}**: {count} news")
         else:
-            st.sidebar.markdown("### ✅ Perfect Match!")
-            st.sidebar.markdown("All data is for selected companies only.")
+            st.sidebar.markdown("### ✅ Selected-company coverage")
+            st.sidebar.markdown("All displayed articles were returned for selected companies.")
     
     # Quick news headlines in sidebar
     if selected_companies and not df.empty:
@@ -1102,9 +1179,9 @@ def main():
                     margin: 5px 0;
                     border-left: 3px solid {'#28a745' if row['Sentiment'] == 'Positive' else '#dc3545' if row['Sentiment'] == 'Negative' else '#ffc107'};
                 ">
-                    <small><strong>{row['Company']}</strong></small><br>
-                    <small>{sentiment_emoji} {row['Headline'][:60]}...</small><br>
-                    <small style="color: #666;">{row['Source']} • {row['Date']}</small>
+                    <small><strong>{escape(str(row['Company']))}</strong></small><br>
+                    <small>{sentiment_emoji} {escape(str(row['Headline']))[:60]}...</small><br>
+                    <small style="color: #666;">{escape(str(row['Source']))} • {row['Date']}</small>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -1209,6 +1286,11 @@ def main():
     
     # Filter data
     df_filtered = df.copy()
+
+    if len(date_range) == 2:
+        start_date, end_date = date_range
+        dates = pd.to_datetime(df_filtered['Date'], errors='coerce').dt.date
+        df_filtered = df_filtered[(dates >= start_date) & (dates <= end_date)]
     
     if selected_companies:
         df_filtered = df_filtered[df_filtered['Company'].isin(selected_companies)]
@@ -1355,10 +1437,10 @@ def main():
                         border-left: 4px solid {'#28a745' if row['Sentiment'] == 'Positive' else '#dc3545' if row['Sentiment'] == 'Negative' else '#ffc107'};
                     ">
                         <h4 style="margin: 0 0 8px 0; color: #333;">
-                            📰 {row['Headline']}
+                            📰 {escape(str(row['Headline']))}
                         </h4>
                         <p style="margin: 5px 0; color: #666;">
-                            <strong>{row['Company']}</strong> • {row['Date']} • {row['Source']} • {row['News_Type']}
+                            <strong>{escape(str(row['Company']))}</strong> • {row['Date']} • {escape(str(row['Source']))} • {escape(str(row['News_Type']))}
                         </p>
                         <p style="margin: 8px 0 0 0;">
                             {sentiment_color} <strong>{row['Sentiment']}</strong> 

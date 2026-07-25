@@ -23,6 +23,13 @@
 
 Financial News Analyzer is a cutting-edge financial intelligence platform that combines **AI-powered sentiment analysis**, **real-time market data**, and **interactive visualizations** to provide comprehensive market insights. Built with modern architecture principles and designed for financial professionals, traders, and analysts.
 
+## ⚠️ Current data status
+
+- The **Market Data** page retrieves the latest available daily OHLCV data from Yahoo Finance through `yfinance`, cached for five minutes.
+- The **Financial Analysis** page retrieves linked provider news from the same integration and applies a transparent keyword-based sentiment baseline.
+- Dashboard summary cards and the demo market feed are explicitly marked as previews; they are not market data.
+- This project is for research and education, not investment advice. `yfinance` is unaffiliated with Yahoo and its data access is intended for personal use; obtain an appropriately licensed provider before commercial or production use.
+
 ### 🎯 Key Highlights
 
 - **🤖 AI-Powered Analysis**: Advanced NLP algorithms for news sentiment analysis
@@ -110,6 +117,7 @@ plotly>=5.15.0
 numpy>=1.24.0
 pytz>=2023.3
 python-dateutil>=2.8.2
+yfinance>=0.2.54,<1.0
 ```
 
 ## �️ Security & Best Practices
@@ -144,7 +152,6 @@ financial_news_analyzer/
 │   ├── 1_Financial_Analysis.py  # News sentiment analysis
 │   ├── 2_Market_Data.py         # Market data visualization
 │   └── 3_Contact_Us.py          # Professional contact interface
-├── 📁 config/                   # Configuration files
 ├── 📁 tests/                    # Unit and integration tests
 ├── Start.py                     # Main application entry point
 └── requirements.txt             # Python dependencies

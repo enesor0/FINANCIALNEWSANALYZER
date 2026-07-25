@@ -18,10 +18,13 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-# Add src to path for imports
+# Add the repository root to the import path so the application is imported as
+# a package.  This keeps the relative imports used by the Clean Architecture
+# layers valid both locally and when Streamlit starts the app.
 current_dir = Path(__file__).parent
-src_path = current_dir / 'src'
-sys.path.insert(0, str(src_path))
+repository_root = current_dir.parent
+if str(repository_root) not in sys.path:
+    sys.path.insert(0, str(repository_root))
 
 # Configure logging
 logging.basicConfig(
@@ -84,25 +87,14 @@ class FinancialAnalyzerApp:
     def _initialize_container(self):
         """Initialize dependency injection container"""
         try:
-            # Try to import container, fallback if not available
-            try:
-                # from infrastructure.container import container
-                # self._container = container
-                
-                # For now, use fallback until infrastructure is implemented
-                self._container = self._create_fallback_container()
-                
-                # Verify container health
-                health = self._container.health_check()
-                if health["container_status"] != "healthy":
-                    logging.warning(f"Container health check: {health}")
-            except ImportError:
-                # Create a minimal fallback container
-                self._container = self._create_fallback_container()
-                
+            from financial_news_analyzer.src.infrastructure.container import Container
+
+            self._container = Container()
+            health = self._container.health_check()
+            if health["container_status"] != "healthy":
+                logging.warning("Container health check: %s", health)
         except Exception as e:
             logging.error(f"Failed to initialize container: {e}")
-            # Create a minimal fallback
             self._container = self._create_fallback_container()
     
     def _create_fallback_container(self):
@@ -120,17 +112,9 @@ class FinancialAnalyzerApp:
     def _initialize_components(self):
         """Initialize UI components"""
         try:
-            # Try to import world clock component, fallback if not available
-            try:
-                # from presentation.components.world_clock_component import WorldClockComponent
-                # self._world_clock = WorldClockComponent()
-                
-                # For now, use fallback until presentation components are implemented
-                self._world_clock = self._create_fallback_world_clock()
-            except ImportError:
-                # Create a minimal fallback world clock
-                self._world_clock = self._create_fallback_world_clock()
-                
+            from financial_news_analyzer.src.presentation.components.world_clock_component import WorldClockComponent
+
+            self._world_clock = WorldClockComponent()
         except Exception as e:
             logging.error(f"Failed to initialize components: {e}")
             self._world_clock = self._create_fallback_world_clock()
@@ -539,9 +523,9 @@ class FinancialAnalyzerApp:
                 Professional Financial Analysis & Market Intelligence Platform
             </h3>
             <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
-                <span class="status-indicator status-healthy">📰 Real-time Analysis</span>
-                <span class="status-indicator status-healthy">📊 Market Intelligence</span>
-                <span class="status-indicator status-healthy">🌍 Global Coverage</span>
+                <span class="status-indicator status-healthy">📰 Linked News Sources</span>
+                <span class="status-indicator status-healthy">📊 Latest Daily Market Data</span>
+                <span class="status-indicator status-healthy">🌍 Global Market Times</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -670,6 +654,7 @@ class FinancialAnalyzerApp:
         """Render quick stats dashboard"""
         st.markdown("---")
         st.markdown("### 📈 Market Overview")
+        st.caption("Dashboard summary cards are UI previews. Use the Market Data and Financial Analysis pages for provider-backed data.")
         
         # Generate sample stats
         import random
@@ -721,7 +706,8 @@ class FinancialAnalyzerApp:
     def _render_live_feed(self):
         """Render live market feed"""
         st.markdown("---")
-        st.markdown("### � Live Market Feed")
+        st.markdown("### 🧪 Demo Market Feed")
+        st.caption("This feed is a product preview and is not sourced from a live market provider.")
         
         # Create sample live feed data with diverse companies
         import random

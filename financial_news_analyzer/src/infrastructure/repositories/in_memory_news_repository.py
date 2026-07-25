@@ -6,8 +6,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import uuid
 
-from domain.repositories.news_repository import INewsRepository
-from domain.entities.financial_news import FinancialNews, NewsCategory, NewsSource
+from ...domain.repositories.news_repository import INewsRepository
+from ...domain.entities.financial_news import FinancialNews, NewsCategory, NewsSource
 
 class InMemoryNewsRepository(INewsRepository):
     """

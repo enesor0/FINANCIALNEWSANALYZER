@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import random
 
-from domain.repositories.market_data_repository import IMarketDataRepository
-from domain.entities.market_data import MarketData, Stock, MarketMetrics, MarketType, Currency
+from ...domain.repositories.market_data_repository import IMarketDataRepository
+from ...domain.entities.market_data import MarketData, Stock, MarketMetrics, MarketType, Currency
 
 class InMemoryMarketRepository(IMarketDataRepository):
     """

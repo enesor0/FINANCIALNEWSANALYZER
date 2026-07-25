@@ -9,6 +9,17 @@ import plotly.express as px # type: ignore
 import plotly.graph_objects as go  # type: ignore
 from datetime import datetime, timedelta
 import numpy as np
+import sys
+from pathlib import Path
+
+repository_root = Path(__file__).resolve().parents[2]
+if str(repository_root) not in sys.path:
+    sys.path.insert(0, str(repository_root))
+
+from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service import (
+    LiveDataUnavailable,
+    YahooFinanceService,
+)
 
 # Page configuration
 st.set_page_config(
@@ -457,6 +468,26 @@ def generate_historical_data(symbol, days=365):
     
     return pd.DataFrame(data)
 
+
+def get_live_universe():
+    """Return a balanced, bounded symbol set for the live market overview."""
+    instruments = []
+    for category, companies in get_company_database().items():
+        instruments.extend((symbol, company, category) for company, symbol in list(companies.items())[:5])
+    return instruments
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_live_market_data(instruments):
+    """Cache provider responses briefly to reduce network calls and rate limiting."""
+    return YahooFinanceService.get_market_snapshot(instruments)
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_live_history(symbol, days):
+    """Cache a symbol history for the same refresh window as the snapshot."""
+    return YahooFinanceService.get_history(symbol, days)
+
 def create_market_overview_chart(df):
     """Create market overview chart"""
     # Sort by market cap for better visualization
@@ -613,8 +644,25 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Generate sample data
-    market_df = generate_market_data()
+    # Live provider data. We intentionally do not fall back to random values:
+    # a missing provider must be visible to the user instead of looking real.
+    if st.sidebar.button("↻ Refresh live data", use_container_width=True):
+        load_live_market_data.clear()
+        load_live_history.clear()
+        st.rerun()
+
+    try:
+        with st.spinner("Loading latest available market prices..."):
+            market_df = load_live_market_data(tuple(get_live_universe()))
+    except LiveDataUnavailable as exc:
+        st.error(f"Live market data is currently unavailable: {exc}")
+        st.info("No simulated prices are shown. Try refreshing in a few minutes.")
+        return
+
+    st.caption(
+        "Live data source: Yahoo Finance via yfinance. Values are the latest available daily close "
+        "and may be delayed; not investment advice."
+    )
     
     # Sidebar controls
     st.sidebar.header("📊 Market Controls")
@@ -679,9 +727,9 @@ def main():
             value=(0.0, 5000.0),
             step=10.0
         )
+        market_cap = pd.to_numeric(filtered_market_df['Market_Cap'], errors='coerce')
         filtered_market_df = filtered_market_df[
-            (filtered_market_df['Market_Cap'] >= min_cap) & 
-            (filtered_market_df['Market_Cap'] <= max_cap)
+            market_cap.isna() | ((market_cap >= min_cap) & (market_cap <= max_cap))
         ]
     
     # Performance filter
@@ -760,8 +808,12 @@ def main():
     period_days = {"1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
     days = period_days[time_period]
     
-    # Generate historical data for selected stock
-    historical_df = generate_historical_data(selected_stock, days)
+    # Retrieve actual OHLCV history for the selected instrument.
+    try:
+        historical_df = load_live_history(selected_stock, days)
+    except LiveDataUnavailable as exc:
+        st.warning(f"Historical data is unavailable for {selected_stock}: {exc}")
+        historical_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
     
     # Market overview metrics
     st.subheader("🌍 Market Overview")
@@ -819,6 +871,10 @@ def main():
     
     # Stock metrics
     stock_data = market_df[market_df['Symbol'] == selected_stock].iloc[0]
+    market_cap_display = "N/A" if pd.isna(stock_data['Market_Cap']) else f"${stock_data['Market_Cap']:.2f}B"
+    pe_ratio_display = "N/A" if pd.isna(stock_data['PE_Ratio']) else f"{stock_data['PE_Ratio']:.2f}"
+    day_high_display = "N/A" if pd.isna(stock_data['Day_High']) else f"${stock_data['Day_High']:.2f}"
+    day_low_display = "N/A" if pd.isna(stock_data['Day_Low']) else f"${stock_data['Day_Low']:.2f}"
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
@@ -838,8 +894,8 @@ def main():
         st.markdown(f"""
         <div class="metric-card">
             <h4>Market Cap</h4>
-            <h3>${stock_data['Market_Cap']}B</h3>
-            <p>Total value</p>
+            <h3>{market_cap_display}</h3>
+            <p>Not supplied by snapshot</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -847,8 +903,8 @@ def main():
         st.markdown(f"""
         <div class="metric-card">
             <h4>P/E Ratio</h4>
-            <h3>{stock_data['PE_Ratio']}</h3>
-            <p>Price to earnings</p>
+            <h3>{pe_ratio_display}</h3>
+            <p>Not supplied by snapshot</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -856,7 +912,7 @@ def main():
         st.markdown(f"""
         <div class="metric-card">
             <h4>Day High</h4>
-            <h3>${stock_data['Day_High']}</h3>
+            <h3>{day_high_display}</h3>
             <p>Today's high</p>
         </div>
         """, unsafe_allow_html=True)
@@ -865,7 +921,7 @@ def main():
         st.markdown(f"""
         <div class="metric-card">
             <h4>Day Low</h4>
-            <h3>${stock_data['Day_Low']}</h3>
+            <h3>{day_low_display}</h3>
             <p>Today's low</p>
         </div>
         """, unsafe_allow_html=True)
@@ -873,15 +929,18 @@ def main():
     # Price and volume charts
     col1, col2 = st.columns([2, 1])
     
-    with col1:
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.plotly_chart(create_price_chart(historical_df, selected_stock), use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.plotly_chart(create_volume_chart(historical_df), use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    if historical_df.empty:
+        st.info("No historical chart is available for the selected instrument.")
+    else:
+        with col1:
+            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+            st.plotly_chart(create_price_chart(historical_df, selected_stock), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with col2:
+            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+            st.plotly_chart(create_volume_chart(historical_df), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
     
     # Market analysis
     st.subheader("📊 Market Analysis")
