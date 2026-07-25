@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sys
 import importlib.util
+import os
 import pkgutil
 from datetime import datetime
 from functools import lru_cache
@@ -617,7 +618,7 @@ def run_app() -> None:
         title="Financial News Analyzer",
         favicon="📈",
         host="0.0.0.0",
-        port=8080,
+        port=int(os.getenv("PORT", "8080")),
         reload=False,
         show=False,
     )
