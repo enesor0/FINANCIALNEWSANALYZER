@@ -9,6 +9,8 @@ if str(repository_root) not in sys.path:
     sys.path.insert(0, str(repository_root))
 
 from financial_news_analyzer.src.presentation import design_system
+from financial_news_analyzer.src.presentation.app_shell import render_app_shell
+from financial_news_analyzer.src.presentation.support import build_support_mailto, validate_support_request
 
 design_system = importlib.reload(design_system)
 apply_design_system = design_system.apply_design_system
@@ -212,6 +214,7 @@ def main():
     """Main function for Contact Us page"""
     load_custom_css()
     apply_design_system()
+    render_app_shell("support")
 
     render_page_header(
         "How can we help?",
@@ -248,6 +251,41 @@ def main():
             """,
             unsafe_allow_html=True,
         )
+
+    st.markdown("### Send a request")
+    st.caption("Your message stays in your browser until you choose to open the prepared email draft.")
+    with st.form("support_request", clear_on_submit=False):
+        form_col1, form_col2 = st.columns(2)
+        with form_col1:
+            requester_name = st.text_input("Your name", placeholder="How should we address you?")
+        with form_col2:
+            requester_email = st.text_input("Email address", placeholder="you@example.com")
+        request_topic = st.selectbox(
+            "Topic",
+            ["Product question", "Bug report", "Data question", "Feature request", "Other"],
+        )
+        request_message = st.text_area(
+            "Message",
+            placeholder="Tell us what you were trying to do, what happened, and any relevant company or filter.",
+            height=150,
+        )
+        send_request = st.form_submit_button("Prepare email request", use_container_width=True)
+
+    if send_request:
+        validation_error = validate_support_request(requester_name, requester_email, request_message)
+        if validation_error:
+            st.error(validation_error)
+        else:
+            st.session_state.support_mailto = build_support_mailto(
+                request_topic,
+                requester_name,
+                requester_email,
+                request_message,
+            )
+
+    if support_mailto := st.session_state.get("support_mailto"):
+        st.success("Your request is ready. Open it in your email app to review and send it.")
+        st.link_button("Open prepared email", support_mailto, use_container_width=True)
 
     st.markdown("### Quick answers")
     with st.expander("Where does the data come from?"):

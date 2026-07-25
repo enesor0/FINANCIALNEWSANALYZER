@@ -152,6 +152,9 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
+node_modules/
+!financial_news_analyzer/src/presentation/frontend/dist/
+!financial_news_analyzer/src/presentation/frontend/dist/**
 config/secrets.json
 config/api_keys.json
 logs/

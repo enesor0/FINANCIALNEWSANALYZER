@@ -28,6 +28,7 @@ if str(repository_root) not in sys.path:
     sys.path.insert(0, str(repository_root))
 
 from financial_news_analyzer.src.presentation import design_system
+from financial_news_analyzer.src.presentation.app_shell import render_app_shell
 
 design_system = importlib.reload(design_system)
 apply_design_system = design_system.apply_design_system
@@ -263,6 +264,7 @@ class FinancialAnalyzerApp:
             # Apply custom styling
             self._apply_styling()
             apply_design_system()
+            render_app_shell("home")
             
             # Render main header
             self._render_header()

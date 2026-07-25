@@ -22,6 +22,7 @@ from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service i
     YahooFinanceService,
 )
 from financial_news_analyzer.src.presentation import design_system
+from financial_news_analyzer.src.presentation.app_shell import render_app_shell
 
 design_system = importlib.reload(design_system)
 apply_design_system = design_system.apply_design_system
@@ -630,6 +631,7 @@ def main():
     """Main function for Market Data page"""
     load_custom_css()
     apply_design_system()
+    render_app_shell("market")
     
     render_page_header(
         "Market data without the noise",

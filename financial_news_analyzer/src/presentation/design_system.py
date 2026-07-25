@@ -22,6 +22,7 @@ def apply_design_system() -> None:
             --danger: #fb7185;
         }
         #MainMenu, footer { visibility: hidden; }
+        [data-testid="stHeader"], [data-testid="stSidebarNav"] { display: none !important; }
         .stApp {
             background:
                 radial-gradient(circle at 10% -10%, rgba(74,222,128,.18), transparent 27rem),
@@ -31,7 +32,7 @@ def apply_design_system() -> None:
         }
         .main .block-container {
             max-width: 1440px;
-            padding: 1.5rem 2.25rem 4rem !important;
+            padding: .35rem 2.25rem 4rem !important;
             margin: 0 auto;
             background: transparent !important;
         }
@@ -73,9 +74,11 @@ def apply_design_system() -> None:
             min-height: 335px; height: calc(100% - 1rem); padding: 1.35rem !important;
             box-sizing: border-box;
         }
-        .feature-card:hover, .contact-method:hover, .metric-card:hover {
-            transform: translateY(-3px) !important; border-color: rgba(74,222,128,.42) !important;
-            box-shadow: 0 16px 35px rgba(0,0,0,.18) !important; animation: none !important;
+        .stApp .feature-card:hover, .stApp .contact-method:hover, .stApp .metric-card:hover,
+        .stApp .support-panel:hover, .stApp .news-card:hover, .stApp .chart-container:hover,
+        .stApp [data-testid="stMetric"]:hover, .stApp [data-testid="stExpander"]:hover {
+            transform: none !important; border-color: rgba(74,222,128,.42) !important;
+            box-shadow: none !important; animation: none !important; filter: none !important;
         }
         [data-testid="stMetric"] {
             background: rgba(11,39,26,.84); border: 1px solid var(--line); border-radius: 14px;
@@ -93,14 +96,23 @@ def apply_design_system() -> None:
             background: linear-gradient(135deg, #22c55e, #15803d) !important; color: #f4fff8 !important;
             box-shadow: 0 8px 20px rgba(21,128,61,.24) !important; font-weight: 700 !important;
         }
-        .stButton > button:hover, [data-testid="stDownloadButton"] > button:hover {
-            transform: translateY(-1px) !important; filter: brightness(1.08);
+        .stApp .stButton > button:hover, .stApp .stButton > button[kind="secondary"]:hover,
+        .stApp .stButton > button[kind="primary"]:hover, .stApp [data-testid="stDownloadButton"] > button:hover {
+            transform: none !important; box-shadow: none !important; filter: brightness(1.04) !important;
         }
         [data-baseweb="input"] > div, [data-baseweb="select"] > div {
             background: rgba(5,24,14,.76) !important; border-color: var(--line) !important;
             border-radius: 10px !important;
         }
+        .stApp .stSelectbox > div > div:hover, .stApp .stMultiSelect > div > div:hover,
+        .stApp [data-baseweb="input"] > div:hover, .stApp [data-baseweb="select"] > div:hover {
+            transform: none !important; box-shadow: none !important;
+        }
         [data-testid="stExpander"] { border: 1px solid var(--line) !important; border-radius: 12px !important; background: rgba(10,35,23,.7); }
+        [data-testid="stForm"] {
+            padding: 1.25rem; border: 1px solid var(--line); border-radius: 16px;
+            background: linear-gradient(145deg, rgba(15,47,33,.86), rgba(8,31,20,.9));
+        }
         [data-testid="stDataFrame"], [data-testid="stTable"] { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
         .stTabs [data-baseweb="tab-list"] { gap: .4rem; border-bottom: 1px solid var(--line); }
         .stTabs [data-baseweb="tab"] { height: 42px; border-radius: 9px 9px 0 0; color: var(--muted); }
