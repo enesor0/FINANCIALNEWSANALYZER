@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ComponentProps,
@@ -24,40 +24,19 @@ const NAVIGATION: NavItem[] = [
 
 function App({ args }: ComponentProps) {
   const activePage = (args.active_page as PageKey | undefined) ?? "home";
-  const [hovered, setHovered] = useState<PageKey | null>(null);
 
   useEffect(() => {
-    Streamlit.setFrameHeight(82);
+    Streamlit.setFrameHeight(72);
   }, []);
-
-  const activeIndex = useMemo(
-    () => Math.max(0, NAVIGATION.findIndex((item) => item.key === activePage)),
-    [activePage],
-  );
 
   return (
     <header className="shell" aria-label="Financial News Analyzer navigation">
-      <div className="shell-glow" aria-hidden="true" />
-
       <a className="brand-cluster" href="#" onClick={(e) => e.preventDefault()}>
-        <span className="brand-mark" aria-hidden="true">
-          <i /><i /><i />
-        </span>
-        <div className="brand-copy">
-          <span className="brand-name">Financial News Analyzer</span>
-          <span className="brand-subtitle">Araştırma çalışma alanı</span>
-        </div>
+        <span className="brand-mark" aria-hidden="true">F</span>
+        <span className="brand-name">Financial News Analyzer</span>
       </a>
 
       <nav className="navigation" aria-label="Workspaces">
-        <span
-          className="nav-indicator"
-          aria-hidden="true"
-          style={{
-            transform: `translateX(${activeIndex * 100}%)`,
-            opacity: hovered ? 0 : 1,
-          }}
-        />
         {NAVIGATION.map((item) => {
           const isActive = item.key === activePage;
           return (
@@ -66,8 +45,6 @@ function App({ args }: ComponentProps) {
               key={item.key}
               className={isActive ? "nav-item active" : "nav-item"}
               aria-current={isActive ? "page" : undefined}
-              onMouseEnter={() => setHovered(item.key)}
-              onMouseLeave={() => setHovered(null)}
               onClick={() => Streamlit.setComponentValue(item.key)}
             >
               <span className="nav-icon" aria-hidden="true">{item.icon}</span>
@@ -79,13 +56,8 @@ function App({ args }: ComponentProps) {
       </nav>
 
       <div className="live-status" aria-label="Live provider data available">
-        <span className="status-pulse" aria-hidden="true">
-          <span className="status-pulse-ring" />
-        </span>
-        <div className="live-status-copy">
-          <strong>Canlı veri</strong>
-          <small>Yahoo Finance sağlayıcısı</small>
-        </div>
+        <span className="status-pulse" aria-hidden="true" />
+        <span>Canlı veri</span>
       </div>
     </header>
   );
