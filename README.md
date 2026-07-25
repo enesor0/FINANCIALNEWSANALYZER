@@ -101,6 +101,19 @@ Financial News Analyzer is a research-oriented Streamlit application combining l
    - Open your browser and navigate to `http://localhost:8501`
    - Enjoy the comprehensive financial analysis experience!
 
+### NiceGUI preview
+
+The Streamlit version remains the default application. To try the new NiceGUI
+interface without changing or removing it, run this from the
+`financial_news_analyzer` directory:
+
+```bash
+python nicegui_app.py
+```
+
+Then open `http://localhost:8080`. The NiceGUI application uses the same Yahoo
+Finance service and support validation logic as the Streamlit version.
+
 ## 📋 Requirements
 
 ```
