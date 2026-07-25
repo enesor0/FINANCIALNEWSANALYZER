@@ -69,7 +69,10 @@ def apply_design_system() -> None:
             border: 1px solid var(--line) !important; border-radius: 16px !important;
             box-shadow: none !important; color: var(--ink) !important;
         }
-        .feature-card, .contact-method { height: calc(100% - 1rem); padding: 1.35rem !important; }
+        .feature-card, .contact-method {
+            min-height: 335px; height: calc(100% - 1rem); padding: 1.35rem !important;
+            box-sizing: border-box;
+        }
         .feature-card:hover, .contact-method:hover, .metric-card:hover {
             transform: translateY(-3px) !important; border-color: rgba(74,222,128,.42) !important;
             box-shadow: 0 16px 35px rgba(0,0,0,.18) !important; animation: none !important;
@@ -80,6 +83,11 @@ def apply_design_system() -> None:
         }
         [data-testid="stMetricLabel"] { color: var(--muted) !important; }
         [data-testid="stMetricValue"] { color: var(--ink) !important; font-weight: 750; }
+        .metric-card {
+            min-height: 154px; display: flex; flex-direction: column; justify-content: space-between;
+            box-sizing: border-box;
+        }
+        .summary-card { height: 270px; min-height: 270px; }
         .stApp .stButton > button, .stApp .stButton > button[kind="secondary"], .stApp .stButton > button[kind="primary"], [data-testid="stDownloadButton"] > button {
             border-radius: 10px !important; border: 1px solid rgba(74,222,128,.45) !important;
             background: linear-gradient(135deg, #22c55e, #15803d) !important; color: #f4fff8 !important;
@@ -100,7 +108,7 @@ def apply_design_system() -> None:
         [data-testid="stAlert"] { border-radius: 12px; border: 1px solid var(--line); }
         .live-note { color: var(--muted); font-size: .88rem; margin: .25rem 0 1rem; }
         .news-card {
-            padding: 1.15rem 1.25rem; margin: .7rem 0; border-radius: 14px;
+            min-height: 148px; box-sizing: border-box; padding: 1.15rem 1.25rem; margin: .7rem 0; border-radius: 14px;
             background: linear-gradient(120deg, rgba(16,51,35,.95), rgba(8,31,20,.95));
             border: 1px solid var(--line); border-left: 4px solid var(--brand);
         }
@@ -114,7 +122,11 @@ def apply_design_system() -> None:
         .sentiment-chip.neutral { background:rgba(250,204,21,.12); color:#fde68a; }
         .article-link { color: #bbf7d0 !important; font-size:.85rem; font-weight:750; text-decoration:none; }
         .article-link:hover { color: #f0fdf4 !important; text-decoration:underline; }
-        .support-panel { background: linear-gradient(145deg, rgba(15,47,33,.92), rgba(8,31,20,.96)); border:1px solid var(--line); border-radius:16px; padding:1.35rem; }
+        .support-panel {
+            min-height: 312px; box-sizing: border-box;
+            background: linear-gradient(145deg, rgba(15,47,33,.92), rgba(8,31,20,.96));
+            border:1px solid var(--line); border-radius:16px; padding:1.35rem;
+        }
         .support-panel h3, .support-panel h4 { color: var(--ink) !important; margin-top:0; }
         .support-panel p, .support-panel li { color: var(--muted) !important; }
         hr { border-color: var(--line) !important; }
@@ -122,6 +134,7 @@ def apply_design_system() -> None:
             .main .block-container { padding: 1rem 1rem 3rem !important; }
             .app-hero { border-radius: 18px; margin-top: 0; }
             [data-testid="stMetric"] { min-height: 96px; padding: .8rem; }
+            .feature-card, .contact-method, .metric-card, .summary-card, .news-card, .support-panel { height: auto; min-height: 0; }
         }
         </style>
         """,

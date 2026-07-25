@@ -1361,7 +1361,7 @@ def main():
     
     with col1:
         st.markdown("""
-        <div class="metric-card sentiment-positive">
+        <div class="metric-card summary-card sentiment-positive">
             <h3>📈 Positive News</h3>
             <h2>{}</h2>
             <p>Articles with positive sentiment</p>
@@ -1370,7 +1370,7 @@ def main():
     
     with col2:
         st.markdown("""
-        <div class="metric-card sentiment-negative">
+        <div class="metric-card summary-card sentiment-negative">
             <h3>📉 Negative News</h3>
             <h2>{}</h2>
             <p>Articles with negative sentiment</p>
@@ -1379,7 +1379,7 @@ def main():
     
     with col3:
         st.markdown("""
-        <div class="metric-card sentiment-neutral">
+        <div class="metric-card summary-card sentiment-neutral">
             <h3>⚖️ Neutral News</h3>
             <h2>{}</h2>
             <p>Articles with neutral sentiment</p>
@@ -1389,7 +1389,7 @@ def main():
     with col4:
         avg_sentiment = df_filtered['Sentiment_Score'].mean()
         st.markdown("""
-        <div class="metric-card">
+        <div class="metric-card summary-card">
             <h3>🎯 Avg Sentiment</h3>
             <h2>{:.2f}</h2>
             <p>Overall sentiment score</p>

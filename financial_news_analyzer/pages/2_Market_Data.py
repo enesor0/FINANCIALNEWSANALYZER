@@ -817,7 +817,7 @@ def main():
     with col1:
         gainers = len(filtered_market_df[filtered_market_df['Change_Pct'] > 0])
         st.markdown(f"""
-        <div class="metric-card price-up">
+        <div class="metric-card summary-card price-up">
             <h3>📈 Gainers</h3>
             <h2>{gainers}</h2>
             <p>Stocks up today</p>
@@ -827,7 +827,7 @@ def main():
     with col2:
         losers = len(filtered_market_df[filtered_market_df['Change_Pct'] < 0])
         st.markdown(f"""
-        <div class="metric-card price-down">
+        <div class="metric-card summary-card price-down">
             <h3>📉 Losers</h3>
             <h2>{losers}</h2>
             <p>Stocks down today</p>
@@ -838,7 +838,7 @@ def main():
         avg_change = round(filtered_market_df['Change_Pct'].mean(), 2)
         status_class = "price-up" if avg_change > 0 else "price-down" if avg_change < 0 else "price-stable"
         st.markdown(f"""
-        <div class="metric-card {status_class}">
+        <div class="metric-card summary-card {status_class}">
             <h3>📊 Avg Change</h3>
             <h2>{avg_change}%</h2>
             <p>Market average</p>
@@ -848,7 +848,7 @@ def main():
     with col4:
         total_volume = filtered_market_df['Volume'].sum() / 1_000_000  # Convert to millions
         st.markdown(f"""
-        <div class="metric-card price-stable">
+        <div class="metric-card summary-card price-stable">
             <h3>📊 Total Volume</h3>
             <h2>{total_volume:.0f}M</h2>
             <p>Shares traded</p>
@@ -875,7 +875,7 @@ def main():
     with col1:
         change_class = "price-up" if stock_data['Change'] > 0 else "price-down"
         st.markdown(f"""
-        <div class="metric-card {change_class}">
+        <div class="metric-card summary-card {change_class}">
             <h4>Current Price</h4>
             <h3>${stock_data['Price']}</h3>
             <p class="{'price-change-positive' if stock_data['Change'] > 0 else 'price-change-negative'}">
@@ -886,7 +886,7 @@ def main():
     
     with col2:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card summary-card">
             <h4>Market Cap</h4>
             <h3>{market_cap_display}</h3>
             <p>Not supplied by snapshot</p>
@@ -895,7 +895,7 @@ def main():
     
     with col3:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card summary-card">
             <h4>P/E Ratio</h4>
             <h3>{pe_ratio_display}</h3>
             <p>Not supplied by snapshot</p>
@@ -904,7 +904,7 @@ def main():
     
     with col4:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card summary-card">
             <h4>Day High</h4>
             <h3>{day_high_display}</h3>
             <p>Today's high</p>
@@ -913,7 +913,7 @@ def main():
     
     with col5:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card summary-card">
             <h4>Day Low</h4>
             <h3>{day_low_display}</h3>
             <p>Today's low</p>
