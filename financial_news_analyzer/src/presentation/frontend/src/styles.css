@@ -1,8 +1,8 @@
 :root {
   --navy: #103657;
   --navy-deep: #0b2b47;
-  --cream: #f4e4c4;
-  --cream-light: #fbf4e6;
+  --cream: #f1e5d0;
+  --cream-light: #faf7f0;
   --sage: #cfd0bd;
   --brown: #94613c;
   --brown-dark: #754727;
@@ -73,8 +73,12 @@ button, a { font: inherit; }
 }
 .nav-item:hover, .nav-item:focus-visible { color: var(--cream-light); background: rgba(244, 228, 196, .11); outline: none; }
 .nav-item:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
-.nav-item.active { color: var(--cream-light); background: var(--brown); }
-.nav-item.active:hover { background: var(--brown-dark); }
+.nav-item.active {
+  color: var(--navy);
+  background: var(--cream);
+  box-shadow: inset 0 -2px 0 var(--brown);
+}
+.nav-item.active:hover { color: var(--navy); background: var(--cream-light); }
 .nav-icon { font-size: .9rem; line-height: 1; }
 .nav-label { white-space: nowrap; }
 

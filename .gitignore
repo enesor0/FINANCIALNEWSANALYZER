@@ -129,11 +129,8 @@ dmypy.json
 .pyre/
 
 # Streamlit secrets - GÜVENLİK ÖNEMİ!
-.streamlit/secrets.toml
-.streamlit/config.toml
-
-# Streamlit cache
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 
 # IDE
 .vscode/
