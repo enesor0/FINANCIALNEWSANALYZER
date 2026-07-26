@@ -19,10 +19,6 @@ from ...domain.entities.market_data import (
 )
 
 
-# Kept as a public alias so callers of earlier versions can migrate safely.
-LiveDataUnavailable = DataProviderUnavailable
-
-
 class YahooFinanceService:
     """Translate yfinance responses into provider-neutral domain models.
 
@@ -32,8 +28,6 @@ class YahooFinanceService:
     """
 
     source_name = "Yahoo Finance via yfinance"
-    source_url = "https://finance.yahoo.com/"
-
     @staticmethod
     def _client() -> Any:
         try:

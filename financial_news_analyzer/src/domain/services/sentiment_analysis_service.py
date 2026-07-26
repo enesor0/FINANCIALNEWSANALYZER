@@ -2,7 +2,6 @@
 
 import math
 import re
-from collections.abc import Iterable
 
 from ..entities.analysis_result import SentimentScore, SentimentType
 
@@ -70,9 +69,6 @@ class FinancialSentimentAnalyzer:
             3,
         )
         return SentimentScore(score, confidence, self._sentiment_type(score))
-
-    def analyze_batch(self, texts: Iterable[str]) -> list[SentimentScore]:
-        return [self.analyze_text(text) for text in texts]
 
     def keyword_evidence(self, text: str) -> dict[str, tuple[str, ...]]:
         """Return the unique keyword matches that explain a sentiment score."""

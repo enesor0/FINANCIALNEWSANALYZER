@@ -24,21 +24,13 @@ class MarketScheduleTests(unittest.TestCase):
         eastern = ZoneInfo("America/New_York")
         saturday_morning = datetime(2026, 7, 25, 10, 0, tzinfo=eastern)
 
-        self.assertEqual(make_market().get_current_status(saturday_morning), MarketStatus.CLOSED)
+        self.assertEqual(make_market().status_at(saturday_morning), MarketStatus.CLOSED)
 
     def test_weekday_is_open_during_regular_hours(self):
         eastern = ZoneInfo("America/New_York")
         monday_morning = datetime(2026, 7, 27, 10, 0, tzinfo=eastern)
 
-        self.assertEqual(make_market().get_current_status(monday_morning), MarketStatus.OPEN)
-
-    def test_next_open_skips_weekend_and_month_boundary(self):
-        eastern = ZoneInfo("America/New_York")
-        friday_after_close = datetime(2026, 7, 31, 17, 0, tzinfo=eastern)
-
-        next_open = make_market()._next_open_after(friday_after_close)
-
-        self.assertEqual(next_open, datetime(2026, 8, 3, 9, 30, tzinfo=eastern))
+        self.assertEqual(make_market().status_at(monday_morning), MarketStatus.OPEN)
 
     def test_sunday_thursday_schedule_supports_saudi_market(self):
         riyadh = ZoneInfo("Asia/Riyadh")
@@ -55,11 +47,11 @@ class MarketScheduleTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            market.get_current_status(datetime(2026, 7, 26, 11, 0, tzinfo=riyadh)),
+            market.status_at(datetime(2026, 7, 26, 11, 0, tzinfo=riyadh)),
             MarketStatus.OPEN,
         )
         self.assertEqual(
-            market.get_current_status(datetime(2026, 7, 24, 11, 0, tzinfo=riyadh)),
+            market.status_at(datetime(2026, 7, 24, 11, 0, tzinfo=riyadh)),
             MarketStatus.CLOSED,
         )
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 from enum import Enum
 from typing import FrozenSet
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -75,49 +75,6 @@ class Market:
         if now.tzinfo is None:
             return now.replace(tzinfo=timezone)
         return now.astimezone(timezone)
-
-    def get_current_status(self, now: datetime | None = None) -> MarketStatus:
-        """Compatibility name for callers that ask for the current status."""
-        return self.status_at(now)
-
-    def next_open_after(self, now: datetime | None = None) -> datetime:
-        """Return the next scheduled opening, respecting the weekday policy."""
-        local_now = self.local_time_at(now)
-        candidate = local_now.replace(
-            hour=self.open_time.hour,
-            minute=self.open_time.minute,
-            second=0,
-            microsecond=0,
-        )
-        while candidate <= local_now or candidate.weekday() not in self.trading_weekdays:
-            candidate += timedelta(days=1)
-        return candidate
-
-    def _next_open_after(self, now: datetime) -> datetime:
-        """Backward-compatible alias for the former internal helper."""
-        return self.next_open_after(now)
-
-    def time_until_open_at(self, now: datetime | None = None) -> timedelta | None:
-        """Return the duration until opening when the market is closed."""
-        local_now = self.local_time_at(now)
-        if self.status_at(local_now) is MarketStatus.OPEN:
-            return None
-        return self.next_open_after(local_now) - local_now
-
-    def time_until_close_at(self, now: datetime | None = None) -> timedelta | None:
-        """Return the duration until closing when the market is open."""
-        local_now = self.local_time_at(now)
-        if self.status_at(local_now) is not MarketStatus.OPEN:
-            return None
-        close_today = local_now.replace(
-            hour=self.close_time.hour,
-            minute=self.close_time.minute,
-            second=0,
-            microsecond=0,
-        )
-        if self.close_time < self.open_time and close_today <= local_now:
-            close_today += timedelta(days=1)
-        return max(close_today - local_now, timedelta())
 
     @staticmethod
     def _is_time_between(current: time, start: time, end: time) -> bool:

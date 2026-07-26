@@ -3,7 +3,7 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 60,
-      "excludeFiles": "{financial_news_analyzer/tests/**,financial_news_analyzer/pages/**,financial_news_analyzer/src/presentation/**,**/__pycache__/**}"
+      "excludeFiles": "{financial_news_analyzer/tests/**,**/__pycache__/**}"
     }
   },
   "rewrites": [
