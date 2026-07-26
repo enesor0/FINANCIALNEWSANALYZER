@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Source-linked financial news sentiment and live market context."
+    />
+    <meta name="theme-color" content="#040d12" />
+    <title>Financial News Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#overview" aria-label="Financial News Analyzer home">
+        <span class="brand-mark" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </span>
+        <span><strong>Financial News</strong><small>Analyzer</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <button class="nav-link active" data-view="overview">Overview</button>
+        <button class="nav-link" data-view="news">News research</button>
+        <button class="nav-link" data-view="markets">Markets</button>
+        <button class="nav-link" data-view="sessions">Sessions</button>
+      </nav>
+      <div class="provider-state"><span></span> Live provider</div>
+    </header>
+
+    <main>
+      <section class="view active" id="overview">
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Financial intelligence workspace</p>
+            <h1>See the signal behind the market story.</h1>
+            <p class="hero-text">
+              Research company news, compare transparent sentiment signals,
+              and put daily price movement in context.
+            </p>
+            <div class="hero-actions">
+              <button class="primary-action" data-open-view="news">Research news</button>
+              <button class="secondary-action" data-open-view="markets">Explore markets</button>
+            </div>
+            <div class="trust-row">
+              <span>Linked sources</span><span>Explainable sentiment</span><span>Live context</span>
+            </div>
+          </div>
+          <aside class="signal-card">
+            <div class="signal-header">
+              <span>Market pulse</span><span class="live-pill">LIVE</span>
+            </div>
+            <div id="pulse-list" class="pulse-list">
+              <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+            </div>
+            <p class="source-note">Latest available daily data · Yahoo Finance</p>
+          </aside>
+        </div>
+
+        <div class="section-heading">
+          <div><p class="eyebrow">Start here</p><h2>One workspace, three useful views.</h2></div>
+          <p>Quick orientation first, deeper research when you need it.</p>
+        </div>
+        <div class="feature-grid">
+          <button class="feature-card" data-open-view="news">
+            <span class="feature-index">01</span>
+            <h3>News intelligence</h3>
+            <p>Follow selected companies and compare the tone of recent source-linked coverage.</p>
+            <b>Open workspace →</b>
+          </button>
+          <button class="feature-card" data-open-view="markets">
+            <span class="feature-index">02</span>
+            <h3>Market performance</h3>
+            <p>Scan daily movement and inspect historical price action and trading volume.</p>
+            <b>Open workspace →</b>
+          </button>
+          <button class="feature-card" data-open-view="sessions">
+            <span class="feature-index">03</span>
+            <h3>Global sessions</h3>
+            <p>Check normal weekday trading schedules across fourteen financial markets.</p>
+            <b>Open workspace →</b>
+          </button>
+        </div>
+      </section>
+
+      <section class="view" id="news">
+        <div class="workspace-header">
+          <div><p class="eyebrow">Source-linked intelligence</p><h1>News research</h1></div>
+          <p>Compare up to eight companies, tickers, sectors, or market topics with explainable sentiment evidence.</p>
+        </div>
+        <form id="news-form" class="control-bar">
+          <label>
+            <span>Companies, tickers, or topics — separate with commas</span>
+            <input
+              id="company-input"
+              value="Apple, Microsoft, NVIDIA"
+              maxlength="400"
+              placeholder="Apple, ASELSAN, artificial intelligence, crude oil"
+            />
+          </label>
+          <label class="compact-control">
+            <span>Coverage depth</span>
+            <select id="news-limit">
+              <option value="6">Focused</option>
+              <option value="8" selected>Balanced</option>
+              <option value="12">Deep</option>
+            </select>
+          </label>
+          <button class="primary-action" type="submit">Analyze coverage</button>
+        </form>
+        <p class="control-hint">Examples: <button data-news-query="Tesla, BYD, Rivian">EV competition</button> · <button data-news-query="Federal Reserve, inflation, interest rates">Macro pulse</button> · <button data-news-query="ASELSAN, THYAO, TUPRS">BIST leaders</button></p>
+        <div id="news-summary" class="metric-grid four"></div>
+        <div id="news-insights" class="insight-grid"></div>
+        <div id="news-toolbar" class="filter-bar hidden">
+          <label><span>Find in results</span><input id="article-search" placeholder="Headline, source, keyword…" /></label>
+          <label><span>Sentiment</span><select id="sentiment-filter"><option value="all">All signals</option></select></label>
+          <label><span>Category</span><select id="category-filter"><option value="all">All categories</option></select></label>
+          <label><span>Sort</span><select id="news-sort"><option value="newest">Newest first</option><option value="impact">Highest impact</option><option value="confidence">Highest confidence</option></select></label>
+          <span id="news-result-count" class="result-count"></span>
+        </div>
+        <div id="news-results" class="article-grid">
+          <div class="empty-state">Run a search to load the latest provider-linked coverage.</div>
+        </div>
+      </section>
+
+      <section class="view" id="markets">
+        <div class="workspace-header">
+          <div><p class="eyebrow">Universal market explorer</p><h1>Markets</h1></div>
+          <p>Find global equities, BIST instruments, ETFs, indices, commodities, currencies, futures, and crypto.</p>
+        </div>
+        <div class="market-search-shell">
+          <form id="market-search-form" class="market-search-form">
+            <label for="market-search-input">Search any company, symbol, or asset</label>
+            <div>
+              <input id="market-search-input" autocomplete="off" maxlength="80" placeholder="Try ASELSAN, ASML, Bitcoin, gold, S&P 500…" />
+              <button class="primary-action" type="submit">Find instrument</button>
+            </div>
+          </form>
+          <div id="market-search-results" class="search-results hidden"></div>
+          <div class="quick-searches">
+            <span>Quick access</span>
+            <button data-market-query="ASELSAN">BIST</button>
+            <button data-market-query="S&P 500">Indices</button>
+            <button data-market-query="Gold">Commodities</button>
+            <button data-market-query="Bitcoin">Crypto</button>
+            <button data-market-query="EUR USD">FX</button>
+          </div>
+        </div>
+        <div class="market-layout">
+          <aside class="watchlist-panel">
+            <div class="panel-title"><span>Market pulse</span><button id="refresh-market">Refresh</button></div>
+            <div id="watchlist" class="watchlist"><div class="skeleton"></div><div class="skeleton"></div></div>
+          </aside>
+          <div class="chart-panel">
+            <div class="chart-header">
+              <div>
+                <p id="chart-name">Select an instrument</p>
+                <h2 id="chart-price">—</h2>
+                <small id="chart-meta">Search above to explore any supported market.</small>
+              </div>
+              <div id="chart-change" class="change-pill neutral">—</div>
+            </div>
+            <div class="chart-toolbar">
+              <div id="period-selector" class="segmented-control" aria-label="Chart period">
+                <button data-days="5">5D</button>
+                <button data-days="30">1M</button>
+                <button data-days="90" class="active">3M</button>
+                <button data-days="180">6M</button>
+                <button data-days="365">1Y</button>
+                <button data-days="1825">5Y</button>
+              </div>
+              <div id="chart-mode-selector" class="segmented-control" aria-label="Chart style">
+                <button data-chart-mode="line" class="active">Line</button>
+                <button data-chart-mode="candles">Candles</button>
+              </div>
+            </div>
+            <div id="price-chart" class="price-chart">
+              <div class="empty-state">Price history will appear here.</div>
+            </div>
+            <div id="chart-stats" class="chart-stats"></div>
+          </div>
+        </div>
+        <div id="instrument-metrics" class="metric-grid market-metrics"></div>
+        <div class="market-research-grid">
+          <section id="instrument-profile" class="research-panel">
+            <p class="eyebrow">Instrument profile</p>
+            <h2>Choose an instrument</h2>
+            <p class="panel-copy">Company or asset details will appear here.</p>
+          </section>
+          <section class="research-panel">
+            <div class="panel-heading-inline">
+              <div><p class="eyebrow">Related coverage</p><h2 id="instrument-news-title">Latest news</h2></div>
+              <button id="research-selected-news" class="text-action" disabled>Open in research →</button>
+            </div>
+            <div id="instrument-news" class="compact-news-list">
+              <div class="empty-state">Select an instrument to load related coverage.</div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="sessions">
+        <div class="workspace-header">
+          <div><p class="eyebrow">Normal weekday schedule</p><h1>Global sessions</h1></div>
+          <p>Local clocks and configured hours. Exchange holidays and early closes are not included.</p>
+        </div>
+        <div id="session-grid" class="session-grid">
+          <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Financial News Analyzer</span>
+      <span>Research support, not investment advice.</span>
+      <a href="mailto:enesor8@gmail.com">Contact</a>
+    </footer>
+  </body>
+</html>

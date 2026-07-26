@@ -11,6 +11,15 @@ from financial_news_analyzer.src.infrastructure.services.yahoo_finance_service i
 
 
 class _FakeSearch:
+    quotes = [{
+        "symbol": "AAPL",
+        "longname": "Apple Inc.",
+        "quoteType": "EQUITY",
+        "typeDisp": "Equity",
+        "exchDisp": "NASDAQ",
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+    }]
     news = [{
         "content": {
             "id": "article-1",
@@ -24,6 +33,23 @@ class _FakeSearch:
 
 
 class _FakeTicker:
+    info = {
+        "symbol": "AAPL",
+        "longName": "Apple Inc.",
+        "shortName": "Apple",
+        "quoteType": "EQUITY",
+        "currency": "USD",
+        "fullExchangeName": "NasdaqGS",
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "regularMarketPrice": 104.0,
+        "regularMarketPreviousClose": 101.0,
+        "marketCap": 3_000_000_000_000,
+        "trailingPE": 30.0,
+        "fiftyTwoWeekHigh": 110.0,
+        "fiftyTwoWeekLow": 80.0,
+    }
+
     def history(self, **_kwargs):
         return pd.DataFrame({
             "Open": [100.0], "High": [102.0], "Low": [99.0],
@@ -43,7 +69,7 @@ class _FakeYFinance:
     def Ticker(self, _symbol):
         return _FakeTicker()
 
-    def Search(self, _query, news_count):
+    def Search(self, _query, news_count=8, **_kwargs):
         self.news_count = news_count
         return _FakeSearch()
 
@@ -77,6 +103,21 @@ class YahooFinanceServiceTests(unittest.TestCase):
         self.assertEqual(len(bars), 1)
         self.assertEqual(bars[0].close_price, 101.0)
         self.assertEqual(bars[0].volume, 1_000)
+
+    def test_instrument_search_translates_discovery_metadata(self):
+        result = self.service.search_instruments("Apple", limit=5)[0]
+
+        self.assertEqual(result.symbol, "AAPL")
+        self.assertEqual(result.name, "Apple Inc.")
+        self.assertEqual(result.sector, "Technology")
+
+    def test_instrument_profile_translates_detailed_metrics(self):
+        profile = self.service.get_instrument_profile("AAPL")
+
+        self.assertEqual(profile.currency, "USD")
+        self.assertEqual(profile.short_name, "Apple")
+        self.assertEqual(profile.market_cap, 3_000_000_000_000)
+        self.assertAlmostEqual(profile.change_percent, 2.97, places=2)
 
 
 if __name__ == "__main__":

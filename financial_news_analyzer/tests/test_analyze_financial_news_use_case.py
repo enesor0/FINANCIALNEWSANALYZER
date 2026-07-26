@@ -39,6 +39,23 @@ class AnalyzeFinancialNewsUseCaseTests(unittest.TestCase):
         self.assertGreater(analyses[0].sentiment.score, 0)
         self.assertGreater(analyses[0].impact_score, 0)
 
+    def test_sentiment_exposes_keyword_evidence(self):
+        evidence = FinancialSentimentAnalyzer().keyword_evidence(
+            "Strong revenue growth beat estimates despite debt risk."
+        )
+
+        self.assertEqual(
+            evidence["positive"],
+            ("beat", "beat estimates", "growth", "revenue growth", "strong"),
+        )
+        self.assertEqual(evidence["negative"], ("debt", "risk"))
+
+    def test_sentiment_understands_simple_negation(self):
+        analyzer = FinancialSentimentAnalyzer()
+
+        self.assertLess(analyzer.analyze_text("Results were not strong.").score, 0)
+        self.assertIn("not strong", analyzer.keyword_evidence("Results were not strong.")["negative"])
+
 
 if __name__ == "__main__":
     unittest.main()

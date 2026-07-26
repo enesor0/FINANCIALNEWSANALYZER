@@ -6,9 +6,11 @@ from dataclasses import dataclass
 
 from .application.use_cases import (
     AnalyzeFinancialNewsUseCase,
+    GetInstrumentProfileUseCase,
     GetMarketSchedulesUseCase,
     GetMarketSnapshotUseCase,
     GetPriceHistoryUseCase,
+    SearchInstrumentsUseCase,
 )
 from .domain.services import FinancialNewsCategorizer, FinancialSentimentAnalyzer
 from .infrastructure.repositories import StaticMarketScheduleRepository
@@ -23,6 +25,8 @@ class ApplicationServices:
     get_market_schedules: GetMarketSchedulesUseCase
     get_market_snapshot: GetMarketSnapshotUseCase
     get_price_history: GetPriceHistoryUseCase
+    get_instrument_profile: GetInstrumentProfileUseCase
+    search_instruments: SearchInstrumentsUseCase
 
 
 def build_application_services() -> ApplicationServices:
@@ -37,4 +41,6 @@ def build_application_services() -> ApplicationServices:
         get_market_schedules=GetMarketSchedulesUseCase(StaticMarketScheduleRepository()),
         get_market_snapshot=GetMarketSnapshotUseCase(yahoo_finance),
         get_price_history=GetPriceHistoryUseCase(yahoo_finance),
+        get_instrument_profile=GetInstrumentProfileUseCase(yahoo_finance),
+        search_instruments=SearchInstrumentsUseCase(yahoo_finance),
     )

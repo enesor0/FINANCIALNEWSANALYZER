@@ -3,11 +3,21 @@
 from .analysis_result import SentimentScore, SentimentType
 from .financial_news import FinancialNews
 from .market import Market, MarketRegion, MarketStatus
-from .market_data import MarketInstrument, MarketQuote, MarketSnapshot, PriceBar, PriceHistory
+from .market_data import (
+    InstrumentProfile,
+    InstrumentSearchResult,
+    MarketInstrument,
+    MarketQuote,
+    MarketSnapshot,
+    PriceBar,
+    PriceHistory,
+)
 from .news_analysis import NewsAnalysis, NewsCategory
 
 __all__ = [
     "FinancialNews",
+    "InstrumentProfile",
+    "InstrumentSearchResult",
     "Market",
     "MarketInstrument",
     "MarketQuote",

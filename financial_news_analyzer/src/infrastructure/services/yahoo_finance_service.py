@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pandas as pd
 
 from ...application.exceptions import DataProviderUnavailable
 from ...domain.entities.financial_news import FinancialNews
-from ...domain.entities.market_data import MarketInstrument, MarketQuote, PriceBar
+from ...domain.entities.market_data import (
+    InstrumentProfile,
+    InstrumentSearchResult,
+    MarketInstrument,
+    MarketQuote,
+    PriceBar,
+)
 
 
 # Kept as a public alias so callers of earlier versions can migrate safely.
@@ -43,6 +49,19 @@ class YahooFinanceService:
         if value is None or pd.isna(value):
             return None
         return float(value)
+
+    @staticmethod
+    def _as_int(value: Any) -> int | None:
+        if value is None or pd.isna(value):
+            return None
+        return int(value)
+
+    @staticmethod
+    def _as_text(value: Any) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        return normalized or None
 
     @staticmethod
     def _as_datetime(value: Any) -> datetime:
@@ -108,9 +127,14 @@ class YahooFinanceService:
     def get_history(self, symbol: str, days: int) -> tuple[PriceBar, ...]:
         """Return actual daily OHLCV bars for one symbol."""
         yf = self._client()
+        end = datetime.now(timezone.utc) + timedelta(days=1)
+        start = end - timedelta(days=max(days, 5))
         try:
             frame = yf.Ticker(symbol).history(
-                period=f"{max(days, 5)}d", interval="1d", auto_adjust=False
+                start=start.date(),
+                end=end.date(),
+                interval="1d",
+                auto_adjust=True,
             )
         except Exception as exc:
             raise DataProviderUnavailable(f"History for {symbol} could not be retrieved.") from exc
@@ -142,6 +166,85 @@ class YahooFinanceService:
         if not bars:
             raise DataProviderUnavailable(f"No usable history is available for {symbol}.")
         return tuple(bars)
+
+    def search_instruments(self, query: str, limit: int = 12) -> tuple[InstrumentSearchResult, ...]:
+        """Discover equities, funds, indices, currencies, futures, and crypto assets."""
+        yf = self._client()
+        try:
+            results = yf.Search(
+                query,
+                max_results=limit,
+                news_count=0,
+                lists_count=0,
+                include_cb=False,
+                include_nav_links=False,
+                include_research=False,
+                include_cultural_assets=False,
+                enable_fuzzy_query=True,
+                recommended=0,
+            ).quotes or []
+        except Exception as exc:
+            raise DataProviderUnavailable(f"Instruments matching {query} could not be retrieved.") from exc
+
+        matches: list[InstrumentSearchResult] = []
+        seen_symbols: set[str] = set()
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+            symbol = self._as_text(item.get("symbol"))
+            if not symbol or symbol in seen_symbols:
+                continue
+            seen_symbols.add(symbol)
+            matches.append(
+                InstrumentSearchResult(
+                    symbol=symbol,
+                    name=self._as_text(item.get("longname") or item.get("shortname")) or symbol,
+                    exchange=self._as_text(item.get("exchDisp") or item.get("exchange")),
+                    quote_type=self._as_text(item.get("typeDisp") or item.get("quoteType")) or "Unknown",
+                    sector=self._as_text(item.get("sectorDisp") or item.get("sector")),
+                    industry=self._as_text(item.get("industryDisp") or item.get("industry")),
+                )
+            )
+        return tuple(matches)
+
+    def get_instrument_profile(self, symbol: str) -> InstrumentProfile:
+        """Return descriptive metadata and the latest available headline metrics."""
+        yf = self._client()
+        try:
+            info = yf.Ticker(symbol).info or {}
+        except Exception as exc:
+            raise DataProviderUnavailable(f"Details for {symbol} could not be retrieved.") from exc
+        if not isinstance(info, dict) or not info:
+            raise DataProviderUnavailable(f"No details are available for {symbol}.")
+
+        return InstrumentProfile(
+            symbol=self._as_text(info.get("symbol")) or symbol,
+            name=self._as_text(info.get("longName") or info.get("shortName")) or symbol,
+            short_name=self._as_text(info.get("shortName")),
+            quote_type=self._as_text(info.get("quoteType")) or "Unknown",
+            currency=self._as_text(info.get("currency")),
+            exchange=self._as_text(info.get("fullExchangeName") or info.get("exchange")),
+            sector=self._as_text(info.get("sector")),
+            industry=self._as_text(info.get("industry")),
+            price=self._as_float(info.get("regularMarketPrice") or info.get("currentPrice")),
+            previous_close=self._as_float(
+                info.get("regularMarketPreviousClose") or info.get("previousClose")
+            ),
+            open_price=self._as_float(info.get("regularMarketOpen") or info.get("open")),
+            day_high=self._as_float(info.get("regularMarketDayHigh") or info.get("dayHigh")),
+            day_low=self._as_float(info.get("regularMarketDayLow") or info.get("dayLow")),
+            volume=self._as_int(info.get("regularMarketVolume") or info.get("volume")),
+            market_cap=self._as_int(info.get("marketCap")),
+            trailing_pe=self._as_float(info.get("trailingPE")),
+            forward_pe=self._as_float(info.get("forwardPE")),
+            dividend_yield=self._as_float(info.get("dividendYield")),
+            fifty_two_week_high=self._as_float(info.get("fiftyTwoWeekHigh")),
+            fifty_two_week_low=self._as_float(info.get("fiftyTwoWeekLow")),
+            average_volume=self._as_int(info.get("averageVolume")),
+            beta=self._as_float(info.get("beta")),
+            website=self._as_text(info.get("website")),
+            description=self._as_text(info.get("longBusinessSummary")),
+        )
 
     def search_news(self, company: str, limit: int = 12) -> tuple[FinancialNews, ...]:
         """Return provider articles without fabricating missing metadata or links."""

@@ -79,3 +79,57 @@ class PriceHistory:
     @classmethod
     def from_bars(cls, symbol: str, bars: Iterable[PriceBar]) -> "PriceHistory":
         return cls(symbol=symbol, bars=tuple(bars))
+
+
+@dataclass(frozen=True, slots=True)
+class InstrumentSearchResult:
+    """A provider-neutral instrument returned by a discovery search."""
+
+    symbol: str
+    name: str
+    exchange: str | None
+    quote_type: str
+    sector: str | None = None
+    industry: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class InstrumentProfile:
+    """Detailed provider-neutral metadata and latest values for one instrument."""
+
+    symbol: str
+    name: str
+    short_name: str | None
+    quote_type: str
+    currency: str | None
+    exchange: str | None
+    sector: str | None
+    industry: str | None
+    price: float | None
+    previous_close: float | None
+    open_price: float | None
+    day_high: float | None
+    day_low: float | None
+    volume: int | None
+    market_cap: int | None
+    trailing_pe: float | None
+    forward_pe: float | None
+    dividend_yield: float | None
+    fifty_two_week_high: float | None
+    fifty_two_week_low: float | None
+    average_volume: int | None
+    beta: float | None
+    website: str | None
+    description: str | None
+
+    @property
+    def change(self) -> float | None:
+        if self.price is None or self.previous_close is None:
+            return None
+        return self.price - self.previous_close
+
+    @property
+    def change_percent(self) -> float | None:
+        if self.change is None or not self.previous_close:
+            return None
+        return self.change / self.previous_close * 100
