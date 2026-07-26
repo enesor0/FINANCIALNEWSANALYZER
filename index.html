@@ -9,6 +9,7 @@
     />
     <meta name="theme-color" content="#040d12" />
     <title>Financial News Analyzer</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -24,10 +25,9 @@
 
     <header class="topbar">
       <a class="brand" href="#overview" aria-label="Financial News Analyzer home">
-        <span class="brand-mark" aria-hidden="true">
-          <i></i><i></i><i></i>
+        <span class="brand-logo-viewport" aria-hidden="true">
+          <img class="brand-logo" src="/logo.png" alt="" />
         </span>
-        <span><strong>Financial News</strong><small>Analyzer</small></span>
       </a>
       <nav aria-label="Primary navigation">
         <button class="nav-link active" data-view="overview">Overview</button>
@@ -149,7 +149,6 @@
           <div id="market-search-results" class="search-results hidden"></div>
           <div class="quick-searches">
             <span>Quick access</span>
-            <button data-market-query="ASELSAN">BIST</button>
             <button data-market-query="S&P 500">Indices</button>
             <button data-market-query="Gold">Commodities</button>
             <button data-market-query="Bitcoin">Crypto</button>

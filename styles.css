@@ -42,15 +42,9 @@ button { color: inherit; }
   background: rgba(4, 13, 18, .88);
   backdrop-filter: blur(20px);
 }
-.brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; min-width: 188px; }
-.brand > span:last-child { display: flex; flex-direction: column; line-height: 1.05; }
-.brand strong { font-family: Manrope, sans-serif; font-size: 14px; }
-.brand small { color: var(--muted); margin-top: 4px; letter-spacing: .14em; text-transform: uppercase; font-size: 9px; }
-.brand-mark { width: 34px; height: 34px; display: flex; align-items: end; gap: 3px; padding: 8px; border: 1px solid rgba(147, 177, 166, .3); border-radius: 10px; background: rgba(147, 177, 166, .06); }
-.brand-mark i { display: block; width: 4px; border-radius: 3px; background: var(--green); }
-.brand-mark i:nth-child(1) { height: 8px; opacity: .55; }
-.brand-mark i:nth-child(2) { height: 13px; opacity: .78; }
-.brand-mark i:nth-child(3) { height: 18px; }
+.brand { display: flex; align-items: center; flex: 0 0 52px; width: 52px; height: 52px; color: inherit; text-decoration: none; }
+.brand-logo-viewport { position: relative; display: block; width: 52px; height: 52px; overflow: hidden; border: 1px solid rgba(147, 177, 166, .3); border-radius: 12px; background: #293b42; box-shadow: 0 8px 24px rgba(4, 13, 18, .36); }
+.brand-logo { position: absolute; top: 50%; left: 50%; display: block; width: 86px; max-width: none; height: auto; transform: translate(-50%, -50%); filter: saturate(.94) contrast(1.05); }
 nav { display: flex; align-self: stretch; gap: 5px; }
 .nav-link { position: relative; border: 0; background: transparent; padding: 0 14px; color: var(--muted); cursor: pointer; font-size: 13px; }
 .nav-link:hover, .nav-link.active { color: var(--text); }
@@ -272,7 +266,9 @@ footer a { color: var(--muted); }
 }
 @media (max-width: 620px) {
   main, footer { width: min(100% - 28px, 1180px); }
-  .brand { min-width: 0; }
+  .brand { flex-basis: 46px; width: 46px; height: 46px; }
+  .brand-logo-viewport { width: 46px; height: 46px; border-radius: 10px; }
+  .brand-logo { width: 76px; }
   .topbar { height: 66px; }
   .topbar nav { overflow-x: auto; justify-content: flex-start; padding: 0 8px; }
   .nav-link { white-space: nowrap; padding: 0 11px; }
